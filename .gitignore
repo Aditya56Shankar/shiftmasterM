@@ -1,0 +1,119 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/packages
+/node_modules
+/lib
+/bin
+/obj
+/dist
+/build
+
+# local user files
+*.user
+*.userosscache
+*.sln.docstates
+
+# local Visual Studio files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.tlog
+*.log
+*.tmp
+*.testsettings
+*.vspscc
+*.vssscc
+*_i.c
+*_p.c
+*.ncb
+*.opendb
+*.sdf
+*.pdb
+*.ipch
+*.aps
+*.bak
+*.cache
+*.diff
+*.patch
+*.swp
+*~
+
+# Rider
+.idea/
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# secrets
+secrets.json
+appsettings.Development.json
+
+# build artifacts
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+Build/
+bld/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+[Dd]ebugPublic/
+[Rr]eleasePublic/
+[Ll]ogs/
+[Ll]og/
+
+# nuget packages
+*.nupkg
+# The packages folder can be ignored because of Package Restore
+**/packages/*
+# except build/, which is used as an MSBuild target.
+!**/packages/build/
+# Uncomment if you are using a solution-level packages folder
+#packages
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+.Trash-*
+
+# SQL Server Local Database files
+*.mdf
+*.ldf
+*.ndf
+
+# SQLite database files (often used for local testing)
+*.db
+*.db3
+*.sqlite
+*.sqlite3
+
+# Publish profiles
+*.pubxml.user
+
+# Environment variables
+.env
+.env.*	
+
+# secrets
+secrets.json
+appsettings.Development.json
+
+# Ignoring the github folder
+.github/

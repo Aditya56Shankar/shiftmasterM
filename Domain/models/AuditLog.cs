@@ -1,0 +1,16 @@
+﻿using System.ComponentModel.DataAnnotations;
+using ShiftMaster.models;
+
+namespace shiftmaster.models
+{
+    public class AuditLog
+    {
+        [Key] public int AuditID { get; set; }
+        [Required, MaxLength(255)] public string Action { get; set; }
+        [Required, MaxLength(100)] public string EntityType { get; set; }
+        [Required] public int RecordID { get; set; }
+        [Required] public DateTime Timestamp { get; set; }
+        [Required] public int UserID { get; set; }
+        public User Actor { get; set; } // The user who performed the action
+    }
+}
