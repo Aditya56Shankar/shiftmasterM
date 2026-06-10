@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Domain.Enums;
+using Domain.Interfaces;
+using Domain.models;
 using ShiftMaster.models;
 
 namespace shiftmaster.models
 {
-    public class LeaveBlock
+    public class LeaveBlock : IMustHaveTenant
     {
         [Key] public int LeaveBlockID { get; set; }
         [Required] public DateTime StartDate { get; set; }
@@ -18,5 +20,9 @@ namespace shiftmaster.models
 
         public int? ApprovedByID { get; set; }
         public User ApprovedBy { get; set; }
+
+        [Required]
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; }
     }
 }

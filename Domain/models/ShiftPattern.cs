@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Enums;
+using Domain.Interfaces;
+using Domain.models;
 
 namespace shiftmaster.models
 {
-    public class ShiftPattern
+    public class ShiftPattern : IMustHaveTenant
     {
         [Key] public int PatternID { get; set; }
         [Required, MaxLength(100)] public string PatternName { get; set; }
@@ -19,6 +21,10 @@ namespace shiftmaster.models
         // Foreign Keys & Navigation
         [Required] public int LocationID { get; set; }
         public WorkLocation Location { get; set; }
+
+        [Required]
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; }
 
         public ICollection<ShiftAssignment> Assignments { get; set; } = new List<ShiftAssignment>();
     }

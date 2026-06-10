@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Domain.Enums;
+using Domain.Interfaces;
+using Domain.models;
 using ShiftMaster.models;
 
 namespace shiftmaster.models
 {
-    public class CoverAssignment
+    public class CoverAssignment : IMustHaveTenant
     {
         [Key] public int CoverID { get; set; }
         [Required] public CoverType CoverType { get; set; }
@@ -20,5 +22,9 @@ namespace shiftmaster.models
 
         [Required] public int AssignedByID { get; set; }
         public User AssignedBy { get; set; }
+
+        [Required]
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; }
     }
 }

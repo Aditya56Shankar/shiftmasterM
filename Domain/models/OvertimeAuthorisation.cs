@@ -1,11 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Enums;
+using Domain.Interfaces;
+using Domain.models;
 using ShiftMaster.models;
 
 namespace shiftmaster.models
 {
-    public class OvertimeAuthorisation
+    public class OvertimeAuthorisation : IMustHaveTenant
     {
         [Key] public int OTID { get; set; }
         [Required] public DateTime WeekStartDate { get; set; }
@@ -20,5 +22,9 @@ namespace shiftmaster.models
 
         [Required] public int AuthorisedByID { get; set; }
         public User AuthorisedBy { get; set; }
+
+        [Required]
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; }
     }
 }

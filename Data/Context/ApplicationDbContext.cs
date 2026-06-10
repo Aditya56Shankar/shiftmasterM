@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Text;
+using Domain.Interfaces;
+using Domain.models;
 using Microsoft.EntityFrameworkCore;
 using shiftmaster.models;
 using ShiftMaster.models;
@@ -31,14 +33,18 @@ namespace Data.Context
         public DbSet<OvertimeAuthorisation> OvertimeAuthorisations { get; set; }
         public DbSet<LabourReport> LabourReports { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Department> Departments { get; set; }
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<Tenant> Tenants { get; set; }
 
+        public int CurrentTenantId { get; set; } = 1; // Need to change the default value for production, because it should be set dynamically based on the logged-in user's tenant.
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             // ENUM VALUE CONVERSIONS (Saving as Strings)
 
-            modelBuilder.Entity<User>().Property(u => u.Role).HasConversion<string>().HasMaxLength(50);
+            
             modelBuilder.Entity<User>().Property(u => u.Status).HasConversion<string>().HasMaxLength(20);
 
             modelBuilder.Entity<WorkLocation>().Property(w => w.Type).HasConversion<string>().HasMaxLength(50);
@@ -215,6 +221,65 @@ namespace Data.Context
                 .WithMany()              // (If WeeklyRoster has a List<ShiftAssignment>, put that property inside WithMany)
                 .HasForeignKey(sa => sa.RosterID)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Prevent Cascade Delete: Department & Users
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Department)
+                .WithMany(d => d.Employees) // Assuming you put public ICollection<User> Employees { get; set; } in Department.cs
+                .HasForeignKey(u => u.DepartmentID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Prevent Cascade Delete: Role & Users
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(u => u.RoleID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Tenant Isolation: Ensure all queries are filtered by TenantID
+            var tenantEntities = modelBuilder.Model.GetEntityTypes()
+                .Where(t => typeof(IMustHaveTenant).IsAssignableFrom(t.ClrType) && t.ClrType.IsClass);
+
+            // Find our hidden helper method below
+            var method = typeof(ApplicationDbContext).GetMethod(nameof(ConfigureTenantEntity), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            foreach (var entity in tenantEntities)
+            {
+                // This dynamically changes <TEntity> to the exact table (like <User> or <Department>)
+                var genericMethod = method.MakeGenericMethod(entity.ClrType);
+                genericMethod.Invoke(this, new object[] { modelBuilder });
+            }
+
+            // Allow duplicate EmployeeIDs ONLY IF they belong to different Tenants
+            modelBuilder.Entity<User>()
+                .HasIndex(u => new { u.TenantId, u.EmployeeID })
+                .IsUnique();
+        }
+        private void ConfigureTenantEntity<TEntity>(ModelBuilder modelBuilder) where TEntity : class, IMustHaveTenant
+        {
+            // 1. Prevent Cascade Deletes (Security for SQL Server)
+            modelBuilder.Entity<TEntity>()
+                .HasOne(typeof(Tenant), "Tenant")
+                .WithMany()
+                .HasForeignKey("TenantId")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 2. Apply the Global Query Filter (Data Isolation) - EF Core loves this now!
+            modelBuilder.Entity<TEntity>()
+                .HasQueryFilter(e => e.TenantId == CurrentTenantId);
+
+            // 3. Create an Index for high-performance querying (O(log N) speed)
+            modelBuilder.Entity<TEntity>()
+                .HasIndex(e => e.TenantId);
+
+            var cascadeFKs = modelBuilder.Model.GetEntityTypes()
+            .SelectMany(t => t.GetForeignKeys())
+            .Where(fk => !fk.IsOwnership && fk.DeleteBehavior == DeleteBehavior.Cascade);
+
+            foreach (var fk in cascadeFKs)
+            {
+                fk.DeleteBehavior = DeleteBehavior.Restrict;
+            }
         }
     }
 }

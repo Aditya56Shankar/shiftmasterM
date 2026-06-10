@@ -1,11 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Enums;
+using Domain.Interfaces;
+using Domain.models;
 using ShiftMaster.models;
 
 namespace shiftmaster.models
 {
-    public class TimesheetSummary
+    public class TimesheetSummary : IMustHaveTenant
     {
         [Key] public int TimesheetID { get; set; }
         [Required] public DateTime WeekStartDate { get; set; }
@@ -17,6 +19,10 @@ namespace shiftmaster.models
 
         // Foreign Keys & Navigation
         [Required] public int UserID { get; set; }
+
+        [Required]
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; }
         public User Employee { get; set; }
 
         public int? ApprovedByID { get; set; }
