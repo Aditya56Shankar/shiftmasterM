@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Domain.Enums;
-using Domain.Interfaces;
 using Domain.models;
 using ShiftMaster.models;
 
 namespace shiftmaster.models
 {
-    public class SwapRequest : IMustHaveTenant
+    public class SwapRequest
     {
         [Key] public int SwapID { get; set; }
         [Required, MaxLength(500)] public string Reason { get; set; }
@@ -20,10 +19,6 @@ namespace shiftmaster.models
         public User Target { get; set; }
 
         [Required] public int OriginalAssignmentID { get; set; }
-
-        [Required]
-        public int TenantId { get; set; }
-        public Tenant Tenant { get; set; }
         public ShiftAssignment OriginalAssignment { get; set; }
 
         public int? ProposedAssignmentID { get; set; }

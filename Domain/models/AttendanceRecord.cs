@@ -1,13 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Enums;
-using Domain.Interfaces;
 using Domain.models;
 using ShiftMaster.models;
 
 namespace shiftmaster.models
 {
-    public class AttendanceRecord : IMustHaveTenant
+    public class AttendanceRecord
     {
         [Key] public int AttendanceID { get; set; }
         [Required] public DateTime WorkDate { get; set; }
@@ -20,13 +19,9 @@ namespace shiftmaster.models
 
         // Foreign Keys & Navigation
         [Required] public int AssignmentID { get; set; }
-        public ShiftAssignment Assignment { get; set; }
+        public ShiftAssignment Assignment { get; set; } =null!;
 
         [Required] public int UserID { get; set; }
-        public User Employee { get; set; }
-
-        [Required]
-        public int TenantId { get; set; }
-        public Tenant Tenant { get; set; }
+        public User Employee { get; set; } = null!;
     }
 }

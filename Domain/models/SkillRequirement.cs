@@ -15,10 +15,6 @@ namespace shiftmaster.models
         [Required] public int LocationID { get; set; }
         [Required] public int DepartmentID { get; set; }
 
-
-        [Required]
-        public int TenantId { get; set; }
-        public Tenant Tenant { get; set; }
         public Department Department { get; set; }
         public WorkLocation Location { get; set; }
 

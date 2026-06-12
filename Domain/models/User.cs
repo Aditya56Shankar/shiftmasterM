@@ -24,16 +24,12 @@ namespace ShiftMaster.models
         [Required] public int RoleID { get; set; }
         [Required] public int DepartmentID { get; set; }
 
-        [Required]
-        public int TenantId { get; set; }
-        public Tenant Tenant { get; set; }
-
         // Navigation Properties
         public Department Department { get; set; }
         public WorkLocation HomeLocation { get; set; }
         public Role Role { get; set; }
-        public ICollection<ShiftAssignment> Shifts { get; set; } = new List<ShiftAssignment>();
-        public ICollection<LeaveBlock> LeaveBlocks { get; set; } = new List<LeaveBlock>();
+        //public ICollection<ShiftAssignment> Shifts { get; set; } = new List<ShiftAssignment>();
+        //public ICollection<LeaveBlock> LeaveBlocks { get; set; } = new List<LeaveBlock>();
         public ICollection<AvailabilitySubmission> Availabilities { get; set; } = new List<AvailabilitySubmission>();
         public ICollection<EmployeeSkill> Skills { get; set; } = new List<EmployeeSkill>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();

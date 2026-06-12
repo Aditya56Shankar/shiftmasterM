@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Enums;
-using Domain.Interfaces;
 using Domain.models;
 using ShiftMaster.models;
-
 namespace shiftmaster.models
 {
-    public class ShiftAssignment : IMustHaveTenant
+    public class ShiftAssignment
     {
         [Key] public int AssignmentID { get; set; }
         [Required] public DateTime AssignedDate { get; set; }
@@ -19,15 +18,12 @@ namespace shiftmaster.models
         [Required] public int RosterID { get; set; }
         public WeeklyRoster Roster { get; set; }
 
-        [Required] public int UserID { get; set; }
+        [Required]
+        [ForeignKey(nameof(Employee))] public int UserID { get; set; }
         public User Employee { get; set; }
 
         [Required] public int ShiftPatternID { get; set; }
         public ShiftPattern Pattern { get; set; }
-
-        [Required]
-        public int TenantId { get; set; }
-        public Tenant Tenant { get; set; }
 
         // 1-to-1 Relationship
         public AttendanceRecord Attendance { get; set; }

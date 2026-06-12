@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Text;
-using Domain.Interfaces;
 using Domain.models;
 using Microsoft.EntityFrameworkCore;
 using shiftmaster.models;
@@ -15,6 +14,7 @@ namespace Data.Context
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
+
         public DbSet<User> Users { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<WorkLocation> WorkLocations { get; set; }
@@ -35,55 +35,35 @@ namespace Data.Context
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Department> Departments { get; set; }
         public DbSet<Role> Roles { get; set; }
-        public DbSet<Tenant> Tenants { get; set; }
-
-        public int CurrentTenantId { get; set; } = 1; // Need to change the default value for production, because it should be set dynamically based on the logged-in user's tenant.
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             // ENUM VALUE CONVERSIONS (Saving as Strings)
-
-            
             modelBuilder.Entity<User>().Property(u => u.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<WorkLocation>().Property(w => w.Type).HasConversion<string>().HasMaxLength(50);
             modelBuilder.Entity<WorkLocation>().Property(w => w.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<ShiftPattern>().Property(s => s.ShiftType).HasConversion<string>().HasMaxLength(50);
             modelBuilder.Entity<ShiftPattern>().Property(s => s.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<SkillRequirement>().Property(s => s.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<AvailabilitySubmission>().Property(a => a.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<LeaveBlock>().Property(l => l.Reason).HasConversion<string>().HasMaxLength(50);
             modelBuilder.Entity<LeaveBlock>().Property(l => l.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<EmployeeSkill>().Property(e => e.ProficiencyLevel).HasConversion<string>().HasMaxLength(50);
             modelBuilder.Entity<EmployeeSkill>().Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<WeeklyRoster>().Property(w => w.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<ShiftAssignment>().Property(s => s.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<SchedulingConstraintViolation>().Property(s => s.ViolationType).HasConversion<string>().HasMaxLength(50);
             modelBuilder.Entity<SchedulingConstraintViolation>().Property(s => s.Severity).HasConversion<string>().HasMaxLength(20);
             modelBuilder.Entity<SchedulingConstraintViolation>().Property(s => s.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<AttendanceRecord>().Property(a => a.Status).HasConversion<string>().HasMaxLength(20);
             modelBuilder.Entity<TimesheetSummary>().Property(t => t.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<SwapRequest>().Property(s => s.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<CoverAssignment>().Property(c => c.CoverType).HasConversion<string>().HasMaxLength(50);
             modelBuilder.Entity<CoverAssignment>().Property(c => c.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<OvertimeAuthorisation>().Property(o => o.OTType).HasConversion<string>().HasMaxLength(50);
             modelBuilder.Entity<OvertimeAuthorisation>().Property(o => o.Status).HasConversion<string>().HasMaxLength(20);
-
             modelBuilder.Entity<LabourReport>().Property(l => l.Scope).HasConversion<string>().HasMaxLength(50);
-
             modelBuilder.Entity<Notification>().Property(n => n.Category).HasConversion<string>().HasMaxLength(50);
             modelBuilder.Entity<Notification>().Property(n => n.Status).HasConversion<string>().HasMaxLength(20);
 
@@ -189,43 +169,43 @@ namespace Data.Context
 
             // -- Prevent Cascade Delete on Shift Assignments --
             modelBuilder.Entity<ShiftAssignment>()
-                .HasOne(sa => sa.Employee) // CHANGE "Employee" to "User" if your property is named User
+                .HasOne(sa => sa.Employee)
                 .WithMany()
                 .HasForeignKey(sa => sa.UserID)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // 1. LeaveBlocks (Points to Employee AND Manager)
             modelBuilder.Entity<LeaveBlock>()
-                .HasOne(lb => lb.Employee) // Change to lb.User if needed
+                .HasOne(lb => lb.Employee)
                 .WithMany()
-                .HasForeignKey(lb => lb.UserID) // Change to lb.EmployeeID if needed
+                .HasForeignKey(lb => lb.UserID)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // 2. Overtime Authorisations (Points to Employee AND Manager)
             modelBuilder.Entity<OvertimeAuthorisation>()
-                .HasOne(ot => ot.Employee) // Change to ot.User if needed
+                .HasOne(ot => ot.Employee)
                 .WithMany()
-                .HasForeignKey(ot => ot.UserID) // Change to ot.EmployeeID if needed
+                .HasForeignKey(ot => ot.UserID)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // 3. Timesheet Summaries (Points to Employee AND Manager)
             modelBuilder.Entity<TimesheetSummary>()
-                .HasOne(ts => ts.Employee) // Change to ts.User if needed
+                .HasOne(ts => ts.Employee)
                 .WithMany()
-                .HasForeignKey(ts => ts.UserID) // Change to ts.EmployeeID if needed
+                .HasForeignKey(ts => ts.UserID)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // -- Prevent Cascade Delete on ShiftAssignments -> WeeklyRosters --
             modelBuilder.Entity<ShiftAssignment>()
-                .HasOne(sa => sa.Roster) // If your property is named WeeklyRoster, change it to sa.WeeklyRoster
-                .WithMany()              // (If WeeklyRoster has a List<ShiftAssignment>, put that property inside WithMany)
+                .HasOne(sa => sa.Roster)
+                .WithMany()
                 .HasForeignKey(sa => sa.RosterID)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Prevent Cascade Delete: Department & Users
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Department)
-                .WithMany(d => d.Employees) // Assuming you put public ICollection<User> Employees { get; set; } in Department.cs
+                .WithMany(d => d.Employees)
                 .HasForeignKey(u => u.DepartmentID)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -236,45 +216,18 @@ namespace Data.Context
                 .HasForeignKey(u => u.RoleID)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Tenant Isolation: Ensure all queries are filtered by TenantID
-            var tenantEntities = modelBuilder.Model.GetEntityTypes()
-                .Where(t => typeof(IMustHaveTenant).IsAssignableFrom(t.ClrType) && t.ClrType.IsClass);
-
-            // Find our hidden helper method below
-            var method = typeof(ApplicationDbContext).GetMethod(nameof(ConfigureTenantEntity), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-            foreach (var entity in tenantEntities)
-            {
-                // This dynamically changes <TEntity> to the exact table (like <User> or <Department>)
-                var genericMethod = method.MakeGenericMethod(entity.ClrType);
-                genericMethod.Invoke(this, new object[] { modelBuilder });
-            }
-
-            // Allow duplicate EmployeeIDs ONLY IF they belong to different Tenants
+            // Make EmployeeID globally unique across the system (Removed TenantId from this index)
             modelBuilder.Entity<User>()
-                .HasIndex(u => new { u.TenantId, u.EmployeeID })
+                .HasIndex(u => u.EmployeeID)
                 .IsUnique();
-        }
-        private void ConfigureTenantEntity<TEntity>(ModelBuilder modelBuilder) where TEntity : class, IMustHaveTenant
-        {
-            // 1. Prevent Cascade Deletes (Security for SQL Server)
-            modelBuilder.Entity<TEntity>()
-                .HasOne(typeof(Tenant), "Tenant")
-                .WithMany()
-                .HasForeignKey("TenantId")
-                .OnDelete(DeleteBehavior.Restrict);
 
-            // 2. Apply the Global Query Filter (Data Isolation) - EF Core loves this now!
-            modelBuilder.Entity<TEntity>()
-                .HasQueryFilter(e => e.TenantId == CurrentTenantId);
-
-            // 3. Create an Index for high-performance querying (O(log N) speed)
-            modelBuilder.Entity<TEntity>()
-                .HasIndex(e => e.TenantId);
-
+            // ----------------------------------------------------------------------
+            // GLOBAL RULE: Disable Cascade Deletes for the entire database!
+            // (Safely moved out of the deleted helper method)
+            // ----------------------------------------------------------------------
             var cascadeFKs = modelBuilder.Model.GetEntityTypes()
-            .SelectMany(t => t.GetForeignKeys())
-            .Where(fk => !fk.IsOwnership && fk.DeleteBehavior == DeleteBehavior.Cascade);
+                .SelectMany(t => t.GetForeignKeys())
+                .Where(fk => !fk.IsOwnership && fk.DeleteBehavior == DeleteBehavior.Cascade);
 
             foreach (var fk in cascadeFKs)
             {

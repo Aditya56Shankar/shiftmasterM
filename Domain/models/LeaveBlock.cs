@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Enums;
-using Domain.Interfaces;
 using Domain.models;
 using ShiftMaster.models;
 
 namespace shiftmaster.models
 {
-    public class LeaveBlock : IMustHaveTenant
+    public class LeaveBlock
     {
         [Key] public int LeaveBlockID { get; set; }
         [Required] public DateTime StartDate { get; set; }
@@ -15,14 +15,12 @@ namespace shiftmaster.models
         [Required] public LeaveStatus Status { get; set; }
 
         // Foreign Keys & Navigation
-        [Required] public int UserID { get; set; }
+        [Required]
+        [ForeignKey(nameof(Employee))] public int UserID { get; set; }
         public User Employee { get; set; }
 
+        [ForeignKey(nameof(ApprovedBy))]
         public int? ApprovedByID { get; set; }
         public User ApprovedBy { get; set; }
-
-        [Required]
-        public int TenantId { get; set; }
-        public Tenant Tenant { get; set; }
     }
 }

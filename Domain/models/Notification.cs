@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Domain.Enums;
-using Domain.Interfaces;
 using Domain.models;
 using ShiftMaster.models;
 
 namespace shiftmaster.models
 {
-    public class Notification : IMustHaveTenant
+    public class Notification
     {
         [Key] public int NotificationID { get; set; }
         [Required, MaxLength(500)] public string Message { get; set; }
@@ -18,8 +17,5 @@ namespace shiftmaster.models
         [Required] public int UserID { get; set; }
         public User Employee { get; set; }
 
-        [Required]
-        public int TenantId { get; set; }
-        public Tenant Tenant { get; set; }
     }
 }
