@@ -4,6 +4,7 @@ using Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260615043910_SeedDataAdded")]
+    partial class SeedDataAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,18 +75,6 @@ namespace Data.Migrations
                     b.HasKey("roleId");
 
                     b.ToTable("Roles");
-
-                    b.HasData(
-                        new
-                        {
-                            roleId = 1,
-                            roleName = "Admin"
-                        },
-                        new
-                        {
-                            roleId = 2,
-                            roleName = "Employee"
-                        });
                 });
 
             modelBuilder.Entity("ShiftMaster.models.User", b =>
@@ -144,21 +135,6 @@ namespace Data.Migrations
                     b.HasIndex("RoleID");
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            UserID = 1,
-                            DepartmentID = 1,
-                            Email = "admin@shiftmaster.com",
-                            EmployeeID = "EMP001",
-                            LocationID = 1,
-                            Name = "Admin User",
-                            PasswordHash = "AQAAAAEAACcQAAAAEExampleHashedPassword==",
-                            Phone = "9876543210",
-                            RoleID = 1,
-                            Status = "Active"
-                        });
                 });
 
             modelBuilder.Entity("shiftmaster.models.AttendanceRecord", b =>
@@ -516,7 +492,7 @@ namespace Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ViolationID"));
 
-                    b.Property<int?>("RosterID")
+                    b.Property<int>("RosterID")
                         .HasColumnType("int");
 
                     b.Property<string>("Severity")
@@ -529,7 +505,7 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int?>("UserID")
+                    b.Property<int>("UserID")
                         .HasColumnType("int");
 
                     b.Property<string>("ViolationType")
@@ -568,7 +544,7 @@ namespace Data.Migrations
                     b.Property<int>("RosterID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ShiftPatternID")
+                    b.Property<int>("ShiftPatternID")
                         .HasColumnType("int");
 
                     b.Property<TimeSpan>("StartTime")
@@ -822,13 +798,13 @@ namespace Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RosterID"));
 
-                    b.Property<int?>("CreatedByID")
+                    b.Property<int>("CreatedByID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("DepartmentID")
+                    b.Property<int>("DepartmentID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("LocationID")
+                    b.Property<int>("LocationID")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("PublishedDate")
@@ -1087,12 +1063,14 @@ namespace Data.Migrations
                     b.HasOne("shiftmaster.models.WeeklyRoster", "Roster")
                         .WithMany("Violations")
                         .HasForeignKey("RosterID")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany()
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Employee");
 
@@ -1109,7 +1087,9 @@ namespace Data.Migrations
 
                     b.HasOne("shiftmaster.models.ShiftPattern", "Pattern")
                         .WithMany("Assignments")
-                        .HasForeignKey("ShiftPatternID");
+                        .HasForeignKey("ShiftPatternID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany()
@@ -1221,15 +1201,21 @@ namespace Data.Migrations
                 {
                     b.HasOne("ShiftMaster.models.User", "CreatedBy")
                         .WithMany()
-                        .HasForeignKey("CreatedByID");
+                        .HasForeignKey("CreatedByID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Domain.models.Department", "Department")
                         .WithMany()
-                        .HasForeignKey("DepartmentID");
+                        .HasForeignKey("DepartmentID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("shiftmaster.models.WorkLocation", "Location")
                         .WithMany("Rosters")
-                        .HasForeignKey("LocationID");
+                        .HasForeignKey("LocationID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("CreatedBy");
 

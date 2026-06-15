@@ -10,7 +10,7 @@ namespace shiftmaster.models
         [Key] public int RosterID { get; set; }
         [Required] public DateTime WeekStartDate { get; set; }
         [Required] public DateTime WeekEndDate { get; set; }
-        public DateTime? PublishedDate { get; set; }
+        public DateTime PublishedDate { get; set; }
         [Required] public RosterStatus Status { get; set; }
 
         // Foreign Keys & Navigation

@@ -1,4 +1,9 @@
-﻿using Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Net.NetworkInformation;
+using System.Reflection.Emit;
+using System.Text;
+using Domain.Enums;
 using Domain.models;
 using Microsoft.EntityFrameworkCore;
 using shiftmaster.models;
@@ -156,9 +161,10 @@ namespace Data.Context
                 .OnDelete(DeleteBehavior.Restrict);
 
             // -- Prevent Cascade Delete on Roster Violations --
+
             modelBuilder.Entity<SchedulingConstraintViolation>()
                 .HasOne(v => v.Roster)
-                .WithMany()
+                .WithMany(r => r.Violations)
                 .HasForeignKey(v => v.RosterID)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -168,12 +174,15 @@ namespace Data.Context
                 .HasForeignKey(v => v.UserID)
                 .OnDelete(DeleteBehavior.Restrict);
 
+
             // -- Prevent Cascade Delete on Shift Assignments --
+
             modelBuilder.Entity<ShiftAssignment>()
-                .HasOne(sa => sa.Employee)
-                .WithMany()
-                .HasForeignKey(sa => sa.UserID)
+                .HasOne(sa => sa.Roster)
+                .WithMany(r => r.ShiftAssignments)
+                .HasForeignKey(sa => sa.RosterID)
                 .OnDelete(DeleteBehavior.Restrict);
+
 
             // 1. LeaveBlocks (Points to Employee AND Manager)
             modelBuilder.Entity<LeaveBlock>()
@@ -222,6 +231,7 @@ namespace Data.Context
                 .HasIndex(u => u.EmployeeID)
                 .IsUnique();
 
+
             // ----------------------------------------------------------------------
             // GLOBAL RULE: Disable Cascade Deletes for the entire database!
             // (Safely moved out of the deleted helper method)
@@ -235,187 +245,117 @@ namespace Data.Context
                 fk.DeleteBehavior = DeleteBehavior.Restrict;
             }
 
+
             modelBuilder.Entity<WorkLocation>().HasData(
 
-
                  new WorkLocation
                  {
-
                      LocationID = 1,
-
                      LocationName = "Chennai Plant",
-
                      City = "Chennai",
-
-                     OperatingHours = "09:00-21:00",   // ✅ REQUIRED FIX                     Status = ActiveStatus.Active
-
+                     OperatingHours = "09:00-21:00",   // ✅ REQUIRED FIX
+                     Status = ActiveStatus.Active
                  },
-
                  new WorkLocation
-                 {
-
-                     LocationID = 2,
-
-                     LocationName = "Bangalore Hub",
-
-                     City = "Bangalore",
-
-                     OperatingHours = "08:00-20:00",   // ✅ REQUIRED FIX                        Status = ActiveStatus.Active
-
-                 }
-
+                    {
+                        LocationID = 2,
+                        LocationName = "Bangalore Hub",
+                        City = "Bangalore",
+                        OperatingHours = "08:00-20:00",   // ✅ REQUIRED FIX
+                        Status = ActiveStatus.Active
+                    }
 
 
                );
 
 
-
             modelBuilder.Entity<Department>().HasData(
-
                 new Department
                 {
-
                     departmentId = 1,
-
                     departmentName = "Production"
                 },
 
-
                 new Department
                 {
-
                     departmentId = 2,
-
                     departmentName = "Maintenance"
                 },
-
                 new Department
                 {
-
-                    departmentId = 3,
-
-                    departmentName = "Quality Control"
+                        departmentId = 3,
+                        departmentName = "Quality Control"
                 }
-
 
             );
 
-
-
-            modelBuilder.Entity<ShiftPattern>().HasData(
-
-                new ShiftPattern
-                {
-
-                    PatternID = 1,
-
-                    PatternName = "Morning Shift",
-
-                    StartTime = new TimeSpan(9, 0, 0),
-
-                    EndTime = new TimeSpan(17, 0, 0),
-
-                    ShiftType = ShiftType.Morning,
-
-                    Status = ActiveStatus.Active,
-
-                    LocationID = 1,
-
-                    MinStaffingLevel = 2
-
-                },
-
-                new ShiftPattern
-                {
-
-                    PatternID = 2,
-
-                    PatternName = "Evening Shift",
-
-                    StartTime = new TimeSpan(17, 0, 0),
-
-                    EndTime = new TimeSpan(1, 0, 0),
-
-                    ShiftType = ShiftType.Afternoon,
-
-                    Status = ActiveStatus.Active,
-
-                    LocationID = 1,
-
-                    MinStaffingLevel = 2
-
-                },
-
-                new ShiftPattern
-                {
-
-                    PatternID = 3,
-
-                    PatternName = "Night Shift",
-
-                    StartTime = new TimeSpan(1, 0, 0),
-
-                    EndTime = new TimeSpan(9, 0, 0),
-
-                    ShiftType = ShiftType.Night,
-
-                    Status = ActiveStatus.Active,
-
-                    LocationID = 2,
-
-                    MinStaffingLevel = 1
-
-                }
-
-
-            );
-            
             modelBuilder.Entity<Role>().HasData(
-
                 new Role
                 {
-
                     roleId = 1,
-
                     roleName = "Admin"
                 },
-
                 new Role
                 {
-
                     roleId = 2,
-
                     roleName = "Employee"
                 }
-
             );
-
 
 
 
             modelBuilder.Entity<User>().HasData(
-
                 new User
                 {
-
                     UserID = 1,
-
                     EmployeeID = "EMP001",
-
                     Name = "Admin User",
-
                     Email = "admin@shiftmaster.com",
-
                     PasswordHash = "AQAAAAEAACcQAAAAEExampleHashedPassword==",
-
                     Phone = "9876543210",
-
                     Status = UserStatus.Active,
-
                     LocationID = 1,
-
                     RoleID = 1, // ✅ Now valid
                     DepartmentID = 1
+                }
+            );
+
+
+
+
+            modelBuilder.Entity<ShiftPattern>().HasData(
+                new ShiftPattern
+                {
+                    PatternID = 1,
+                    PatternName = "Morning Shift",
+                    StartTime = new TimeSpan(9, 0, 0),
+                    EndTime = new TimeSpan(17, 0, 0),
+                    ShiftType = ShiftType.Morning,
+                    Status = ActiveStatus.Active,
+                    LocationID = 1,
+                    MinStaffingLevel = 2
+                },
+                new ShiftPattern
+                {
+                    PatternID = 2,
+                    PatternName = "Evening Shift",
+                    StartTime = new TimeSpan(17, 0, 0),
+                    EndTime = new TimeSpan(1, 0, 0),
+                    ShiftType = ShiftType.Afternoon,
+                    Status = ActiveStatus.Active,
+                    LocationID = 1,
+                    MinStaffingLevel = 2
+                },
+                new ShiftPattern
+                {
+                    PatternID = 3,
+                    PatternName = "Night Shift",
+                    StartTime = new TimeSpan(1, 0, 0),
+                    EndTime = new TimeSpan(9, 0, 0),
+                    ShiftType = ShiftType.Night,
+                    Status = ActiveStatus.Active,
+                    LocationID = 2,
+                    MinStaffingLevel = 1
                 }
 
             );
