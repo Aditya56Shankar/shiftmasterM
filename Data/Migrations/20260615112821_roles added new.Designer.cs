@@ -4,6 +4,7 @@ using Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260615112821_roles added new")]
+    partial class rolesaddednew
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -537,11 +540,16 @@ namespace Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("WeeklyRosterRosterID")
+                        .HasColumnType("int");
+
                     b.HasKey("ViolationID");
 
                     b.HasIndex("RosterID");
 
                     b.HasIndex("UserID");
+
+                    b.HasIndex("WeeklyRosterRosterID");
 
                     b.ToTable("SchedulingConstraintViolations");
                 });
@@ -1085,7 +1093,7 @@ namespace Data.Migrations
             modelBuilder.Entity("shiftmaster.models.SchedulingConstraintViolation", b =>
                 {
                     b.HasOne("shiftmaster.models.WeeklyRoster", "Roster")
-                        .WithMany("Violations")
+                        .WithMany()
                         .HasForeignKey("RosterID")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -1093,6 +1101,10 @@ namespace Data.Migrations
                         .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("shiftmaster.models.WeeklyRoster", null)
+                        .WithMany("Violations")
+                        .HasForeignKey("WeeklyRosterRosterID");
 
                     b.Navigation("Employee");
 
