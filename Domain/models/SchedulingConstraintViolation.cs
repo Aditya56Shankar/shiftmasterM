@@ -13,10 +13,12 @@ namespace shiftmaster.models
         [Required] public ViolationStatus Status { get; set; }
 
         // Foreign Keys & Navigation
-        [Required] public int RosterID { get; set; }
+        //[Required] 
+        public int? RosterID { get; set; }
         public WeeklyRoster Roster { get; set; }
 
-        [Required] public int UserID { get; set; }
+        //[Required] 
+        public int? UserID { get; set; }
         public User Employee { get; set; }
     }
 }

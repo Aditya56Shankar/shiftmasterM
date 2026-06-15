@@ -14,13 +14,16 @@ namespace shiftmaster.models
         [Required] public RosterStatus Status { get; set; }
 
         // Foreign Keys & Navigation
-        [Required] public int LocationID { get; set; }
+        //[Required] 
+        public int? LocationID { get; set; }
         public WorkLocation Location { get; set; }
 
-        [Required] public int CreatedByID { get; set; }
+        //[Required] 
+        public int? CreatedByID { get; set; }
         public User CreatedBy { get; set; }
 
-        [Required] public int DepartmentID { get; set; }
+        //[Required] 
+        public int? DepartmentID { get; set; }
         public Department Department { get; set; }
         public ICollection<ShiftAssignment> ShiftAssignments { get; set; } = new List<ShiftAssignment>();
         public ICollection<SchedulingConstraintViolation> Violations { get; set; } = new List<SchedulingConstraintViolation>();

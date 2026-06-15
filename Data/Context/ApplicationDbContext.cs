@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection.Emit;
-using System.Text;
+﻿using Domain.Enums;
 using Domain.models;
 using Microsoft.EntityFrameworkCore;
 using shiftmaster.models;
 using ShiftMaster.models;
+using System;
+using System.Collections.Generic;
+using System.Reflection.Emit;
+using System.Text;
 
 namespace Data.Context
 {
@@ -233,6 +234,141 @@ namespace Data.Context
             {
                 fk.DeleteBehavior = DeleteBehavior.Restrict;
             }
+
+            modelBuilder.Entity<WorkLocation>().HasData(
+
+
+                 new WorkLocation
+                 {
+
+                     LocationID = 1,
+
+                     LocationName = "Chennai Plant",
+
+                     City = "Chennai",
+
+                     OperatingHours = "09:00-21:00",   // ✅ REQUIRED FIX                     Status = ActiveStatus.Active
+
+                 },
+
+                 new WorkLocation
+                 {
+
+                     LocationID = 2,
+
+                     LocationName = "Bangalore Hub",
+
+                     City = "Bangalore",
+
+                     OperatingHours = "08:00-20:00",   // ✅ REQUIRED FIX                        Status = ActiveStatus.Active
+
+                 }
+
+
+
+               );
+
+
+
+            modelBuilder.Entity<Department>().HasData(
+
+                new Department
+                {
+
+                    departmentId = 1,
+
+                    departmentName = "Production"
+                },
+
+
+                new Department
+                {
+
+                    departmentId = 2,
+
+                    departmentName = "Maintenance"
+                },
+
+                new Department
+                {
+
+                    departmentId = 3,
+
+                    departmentName = "Quality Control"
+                }
+
+
+            );
+
+
+
+            modelBuilder.Entity<ShiftPattern>().HasData(
+
+                new ShiftPattern
+                {
+
+                    PatternID = 1,
+
+                    PatternName = "Morning Shift",
+
+                    StartTime = new TimeSpan(9, 0, 0),
+
+                    EndTime = new TimeSpan(17, 0, 0),
+
+                    ShiftType = ShiftType.Morning,
+
+                    Status = ActiveStatus.Active,
+
+                    LocationID = 1,
+
+                    MinStaffingLevel = 2
+
+                },
+
+                new ShiftPattern
+                {
+
+                    PatternID = 2,
+
+                    PatternName = "Evening Shift",
+
+                    StartTime = new TimeSpan(17, 0, 0),
+
+                    EndTime = new TimeSpan(1, 0, 0),
+
+                    ShiftType = ShiftType.Afternoon,
+
+                    Status = ActiveStatus.Active,
+
+                    LocationID = 1,
+
+                    MinStaffingLevel = 2
+
+                },
+
+                new ShiftPattern
+                {
+
+                    PatternID = 3,
+
+                    PatternName = "Night Shift",
+
+                    StartTime = new TimeSpan(1, 0, 0),
+
+                    EndTime = new TimeSpan(9, 0, 0),
+
+                    ShiftType = ShiftType.Night,
+
+                    Status = ActiveStatus.Active,
+
+                    LocationID = 2,
+
+                    MinStaffingLevel = 1
+
+                }
+
+
+            );
         }
     }
 }
