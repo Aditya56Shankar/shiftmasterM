@@ -15,6 +15,7 @@ namespace API.Controllers
     [ApiController]
     public class RostersController : ControllerBase
     {
+        private readonly ApplicationDbContext _context;
 
         private readonly IWeeklyRosterRepository repository;
         private readonly IMapper mapper;
@@ -32,6 +33,15 @@ namespace API.Controllers
             var res = mapper.Map<WeeklyRoster>(dto);
             await repository.AddAsync(res);
 
+            var roster = new WeeklyRoster
+            {
+                LocationID = dto.LocationID,
+                DepartmentID = dto.DepartmentID,
+                WeekStartDate = dto.WeekStartDate.Date,
+                WeekEndDate = dto.WeekStartDate.Date.AddDays(6),
+                CreatedByID = dto.CreatedByID,
+                Status = RosterStatus.Draft
+            };
 
             return Ok(mapper.Map<RosterResponseDto>(res));
         }
@@ -98,8 +108,8 @@ namespace API.Controllers
         //    };
 
         //    return Ok(response);
-    
 
+           
     }
 }
 
