@@ -369,6 +369,57 @@ namespace Data.Context
 
 
             );
+            
+            modelBuilder.Entity<Role>().HasData(
+
+                new Role
+                {
+
+                    roleId = 1,
+
+                    roleName = "Admin"
+                },
+
+                new Role
+                {
+
+                    roleId = 2,
+
+                    roleName = "Employee"
+                }
+
+            );
+
+
+
+
+            modelBuilder.Entity<User>().HasData(
+
+                new User
+                {
+
+                    UserID = 1,
+
+                    EmployeeID = "EMP001",
+
+                    Name = "Admin User",
+
+                    Email = "admin@shiftmaster.com",
+
+                    PasswordHash = "AQAAAAEAACcQAAAAEExampleHashedPassword==",
+
+                    Phone = "9876543210",
+
+                    Status = UserStatus.Active,
+
+                    LocationID = 1,
+
+                    RoleID = 1, // ✅ Now valid
+                    DepartmentID = 1
+                }
+
+            );
+
         }
     }
 }
