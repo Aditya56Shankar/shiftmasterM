@@ -7,6 +7,15 @@ using Services.Mapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+
+
 // ✅ DB
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -22,6 +31,10 @@ builder.Services.AddAutoMapper(cfg => { },
 
 // ✅ Repository
 builder.Services.AddScoped<IWeeklyRosterRepository, WeeklyRosterRepository>();
+builder.Services.AddScoped<ILeaveBlockRepository, LeaveBlockRepository>();
+builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
+builder.Services.AddScoped<IEmployeeSkillRepository, EmployeeSkillRepository>();
+
 
 // ✅ Controllers
 builder.Services.AddControllers();
