@@ -1,119 +1,109 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# =========================
+# DEPENDENCIES
+# =========================
 /packages
 /node_modules
 /lib
-/bin
-/obj
-/dist
-/build
 
-# local user files
-*.user
-*.userosscache
-*.sln.docstates
-
-# local Visual Studio files
-.vs/
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-*.tlog
-*.log
-*.tmp
-*.testsettings
-*.vspscc
-*.vssscc
-*_i.c
-*_p.c
-*.ncb
-*.opendb
-*.sdf
-*.pdb
-*.ipch
-*.aps
-*.bak
-*.cache
-*.diff
-*.patch
-*.swp
-*~
-
-# Rider
-.idea/
-
-# Resharper
-_ReSharper*/
-*.[Rr]e[Ss]harper
-
-# secrets
-secrets.json
-appsettings.Development.json
-
-# build artifacts
+# =========================
+# BUILD OUTPUT
+# =========================
+/bin/
+/obj/
+/dist/
+/build/
 [Bb]in/
 [Oo]bj/
 [Dd]ebug/
 [Rr]elease/
 x64/
 x86/
-build/
-Build/
-bld/
-[Bb]uild/
-[Dd]ebug/
-[Rr]elease/
-[Dd]ebugPublic/
-[Rr]eleasePublic/
+
+# =========================
+# LOGS & TEMP FILES
+# =========================
+*.log
+*.tmp
+*.tlog
 [Ll]ogs/
-[Ll]og/
 
-# nuget packages
-*.nupkg
-# The packages folder can be ignored because of Package Restore
-**/packages/*
-# except build/, which is used as an MSBuild target.
-!**/packages/build/
-# Uncomment if you are using a solution-level packages folder
-#packages
+# =========================
+# USER & IDE FILES
+# =========================
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
 
-# Windows
+.vs/
+.idea/
+.vscode/
+
+# =========================
+# RESHARPER
+# =========================
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# =========================
+# OS FILES
+# =========================
 Thumbs.db
 ehthumbs.db
 Desktop.ini
-$RECYCLE.BIN/
-
-# Mac
 .DS_Store
 .AppleDouble
 .LSOverride
+$RECYCLE.BIN/
 
-# Linux
-.Trash-*
-
-# SQL Server Local Database files
+# =========================
+# DATABASE FILES
+# =========================
 *.mdf
 *.ldf
 *.ndf
-
-# SQLite database files (often used for local testing)
 *.db
 *.db3
 *.sqlite
 *.sqlite3
 
-# Publish profiles
+# =========================
+# ENVIRONMENT FILES
+# =========================
+.env
+.env.*
+
+# =========================
+# NUGET
+# =========================
+*.nupkg
+**/packages/*
+!**/packages/build/
+
+# =========================
+# PUBLISH FILES
+# =========================
 *.pubxml.user
 
-# Environment variables
-.env
-.env.*	
-
-# secrets
+# =========================
+# SECRETS (OPTIONAL)
+# =========================
 secrets.json
+
+
+Migrations/
+appsettings.json
 appsettings.Development.json
 
-# Ignoring the github folder
-.github/
+
+
+# =========================
+# IMPORTANT NOTES
+# =========================
+# ✅ Migrations WILL be committed
+# ✅ appsettings.json WILL be committed
+# ✅ appsettings.Development.json can be ignored if needed
+
+# Uncomment below ONLY if you want to ignore local dev config
+# appsettings.Development.json
+``

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260615104050_InitialCreate")]
+    [Migration("20260616095218_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -519,7 +519,7 @@ namespace Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ViolationID"));
 
-                    b.Property<int>("RosterID")
+                    b.Property<int?>("RosterID")
                         .HasColumnType("int");
 
                     b.Property<string>("Severity")
@@ -532,7 +532,7 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("UserID")
+                    b.Property<int?>("UserID")
                         .HasColumnType("int");
 
                     b.Property<string>("ViolationType")
@@ -571,7 +571,7 @@ namespace Data.Migrations
                     b.Property<int>("RosterID")
                         .HasColumnType("int");
 
-                    b.Property<int>("ShiftPatternID")
+                    b.Property<int?>("ShiftPatternID")
                         .HasColumnType("int");
 
                     b.Property<TimeSpan>("StartTime")
@@ -825,16 +825,16 @@ namespace Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RosterID"));
 
-                    b.Property<int>("CreatedByID")
+                    b.Property<int?>("CreatedByID")
                         .HasColumnType("int");
 
-                    b.Property<int>("DepartmentID")
+                    b.Property<int?>("DepartmentID")
                         .HasColumnType("int");
 
-                    b.Property<int>("LocationID")
+                    b.Property<int?>("LocationID")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("PublishedDate")
+                    b.Property<DateTime>("PublishedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
@@ -1090,14 +1090,12 @@ namespace Data.Migrations
                     b.HasOne("shiftmaster.models.WeeklyRoster", "Roster")
                         .WithMany("Violations")
                         .HasForeignKey("RosterID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany()
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Employee");
 
@@ -1114,9 +1112,7 @@ namespace Data.Migrations
 
                     b.HasOne("shiftmaster.models.ShiftPattern", "Pattern")
                         .WithMany("Assignments")
-                        .HasForeignKey("ShiftPatternID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("ShiftPatternID");
 
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany()
@@ -1228,21 +1224,15 @@ namespace Data.Migrations
                 {
                     b.HasOne("ShiftMaster.models.User", "CreatedBy")
                         .WithMany()
-                        .HasForeignKey("CreatedByID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("CreatedByID");
 
                     b.HasOne("Domain.models.Department", "Department")
                         .WithMany()
-                        .HasForeignKey("DepartmentID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("DepartmentID");
 
                     b.HasOne("shiftmaster.models.WorkLocation", "Location")
                         .WithMany("Rosters")
-                        .HasForeignKey("LocationID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("LocationID");
 
                     b.Navigation("CreatedBy");
 

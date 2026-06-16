@@ -831,7 +831,7 @@ namespace Data.Migrations
                     b.Property<int?>("LocationID")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("PublishedDate")
+                    b.Property<DateTime>("PublishedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Status")

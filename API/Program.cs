@@ -16,7 +16,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // ✅ AutoMapper (v16 correct way)
-builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+
+builder.Services.AddAutoMapper(cfg => { },
+    typeof(AutoMapperProfile).Assembly);
 
 // ✅ Repository
 builder.Services.AddScoped<IWeeklyRosterRepository, WeeklyRosterRepository>();
