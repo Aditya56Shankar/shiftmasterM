@@ -25,6 +25,21 @@ namespace Services.Mapper
 
 
 
+
+            CreateMap<ShiftAssignment, SupervisorAssignmentViewDto>()
+                .ForMember(dest => dest.EmployeeName, opt => opt.Ignore()) // set manually
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+
+            CreateMap<SchedulingConstraintViolation, ViolationViewDto>()
+                .ForMember(dest => dest.ViolationType, opt => opt.MapFrom(src => src.ViolationType.ToString()))
+                .ForMember(dest => dest.Severity, opt => opt.MapFrom(src => src.Severity.ToString()))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+
+            CreateMap<WeeklyRoster, SupervisorRosterResponseDto>();
+
+
+
+
         }
     }
 }

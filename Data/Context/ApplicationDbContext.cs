@@ -208,7 +208,7 @@ namespace Data.Context
             // -- Prevent Cascade Delete on ShiftAssignments -> WeeklyRosters --
             modelBuilder.Entity<ShiftAssignment>()
                 .HasOne(sa => sa.Roster)
-                .WithMany()
+                .WithMany(r => r.ShiftAssignments)
                 .HasForeignKey(sa => sa.RosterID)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -257,13 +257,13 @@ namespace Data.Context
                      Status = ActiveStatus.Active
                  },
                  new WorkLocation
-                    {
-                        LocationID = 2,
-                        LocationName = "Bangalore Hub",
-                        City = "Bangalore",
-                        OperatingHours = "08:00-20:00",   // ✅ REQUIRED FIX
-                        Status = ActiveStatus.Active
-                    }
+                 {
+                     LocationID = 2,
+                     LocationName = "Bangalore Hub",
+                     City = "Bangalore",
+                     OperatingHours = "08:00-20:00",   // ✅ REQUIRED FIX
+                     Status = ActiveStatus.Active
+                 }
 
 
                );
@@ -283,8 +283,8 @@ namespace Data.Context
                 },
                 new Department
                 {
-                        departmentId = 3,
-                        departmentName = "Quality Control"
+                    departmentId = 3,
+                    departmentName = "Quality Control"
                 }
 
             );
@@ -303,7 +303,6 @@ namespace Data.Context
             );
 
 
-
             modelBuilder.Entity<User>().HasData(
                 new User
                 {
@@ -319,7 +318,6 @@ namespace Data.Context
                     DepartmentID = 1
                 }
             );
-
 
 
 
