@@ -582,9 +582,6 @@ namespace Data.Migrations
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("WeeklyRosterRosterID")
-                        .HasColumnType("int");
-
                     b.HasKey("AssignmentID");
 
                     b.HasIndex("RosterID");
@@ -592,8 +589,6 @@ namespace Data.Migrations
                     b.HasIndex("ShiftPatternID");
 
                     b.HasIndex("UserID");
-
-                    b.HasIndex("WeeklyRosterRosterID");
 
                     b.ToTable("ShiftAssignments");
                 });
@@ -831,7 +826,7 @@ namespace Data.Migrations
                     b.Property<int?>("LocationID")
                         .HasColumnType("int");
 
-                    b.Property<DateTime?>("PublishedDate")
+                    b.Property<DateTime>("PublishedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Status")
@@ -1102,7 +1097,7 @@ namespace Data.Migrations
             modelBuilder.Entity("shiftmaster.models.ShiftAssignment", b =>
                 {
                     b.HasOne("shiftmaster.models.WeeklyRoster", "Roster")
-                        .WithMany()
+                        .WithMany("ShiftAssignments")
                         .HasForeignKey("RosterID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1116,10 +1111,6 @@ namespace Data.Migrations
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("shiftmaster.models.WeeklyRoster", null)
-                        .WithMany("ShiftAssignments")
-                        .HasForeignKey("WeeklyRosterRosterID");
 
                     b.Navigation("Employee");
 

@@ -208,7 +208,7 @@ namespace Data.Context
             // -- Prevent Cascade Delete on ShiftAssignments -> WeeklyRosters --
             modelBuilder.Entity<ShiftAssignment>()
                 .HasOne(sa => sa.Roster)
-                .WithMany()
+                .WithMany(r => r.ShiftAssignments)
                 .HasForeignKey(sa => sa.RosterID)
                 .OnDelete(DeleteBehavior.Restrict);
 

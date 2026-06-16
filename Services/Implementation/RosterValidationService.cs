@@ -1,22 +1,42 @@
 ﻿using Data.Context;
+
 using Domain.Enums;
+
 using Microsoft.EntityFrameworkCore;
+
 using Services.Interfaces;
+
 using shiftmaster.models;
-using System;
+
+using System; 
+
 using System.Linq;
+
 using System.Threading.Tasks;
 
+
+
 namespace ShiftMaster.Application.Implementation
+
 {
+
     public class RosterValidationService : IRosterValidationService
+
     {
+
         private readonly ApplicationDbContext _context;
 
+
+
         public RosterValidationService(ApplicationDbContext context)
+
         {
+
             _context = context;
+
         }
+
+
 
         public async Task ValidateAssignmentConstraintsAsync(int assignmentId)
         {
@@ -30,7 +50,29 @@ namespace ShiftMaster.Application.Implementation
             int userId = shift.UserID;
             DateTime targetDate = shift.AssignedDate.Date;
 
-            // 2. Clear old violations for this employee on this roster to re-evaluate cleanly
+            // BATCH FETCH 1: Pull ALL shifts for this user for the entire week in ONE network trip
+            var weeklyShifts = await _context.ShiftAssignments
+                .Where(sa => sa.RosterID == rosterId && sa.UserID == userId && sa.Status != ShiftAssignmentStatus.Cancelled)
+                .ToListAsync();
+
+            // BATCH FETCH 2: Pull ALL active leaves for this user in ONE query
+            var activeLeaves = await _context.LeaveBlocks
+                .Where(lb => lb.UserID == userId && lb.Status == LeaveStatus.Active)
+                .ToListAsync();
+
+            // 🔍 BATCH FETCH 3: Fetch all active skill IDs this employee possesses
+            var employeeSkills = await _context.EmployeeSkills
+    .Where(es => es.UserID == userId && es.Status == ActiveStatus.Active)
+    .Select(es => es.SkillName) // 👈 Changed from EmpSkillID to SkillName to match fields
+    .ToListAsync();
+
+            // 🔍 BATCH FETCH 4: Fetch all required skill names for this shift's operating location
+            var requiredSkills = await _context.SkillRequirements
+                .Where(sr => sr.LocationID == shift.AssignmentID && sr.Status == ActiveStatus.Active) // 👈 Links through LocationID
+                .Select(sr => sr.SkillName) // 👈 Grab SkillName to compare with employee skills
+                .ToListAsync();
+
+            // 2. Clear old violations for this employee on this roster
             var oldViolations = await _context.SchedulingConstraintViolations
                 .Where(v => v.RosterID == rosterId && v.UserID == userId)
                 .ToListAsync();
@@ -42,34 +84,25 @@ namespace ShiftMaster.Application.Implementation
             }
 
             // ----------------------------------------------------------------------
-            // RULE 1: Leave Blocks Verification (UnavailableEmployee)
+            // RULE 1: Leave Blocks Verification (Lightning fast in-memory execution)
             // ----------------------------------------------------------------------
-            bool hasLeave = await _context.LeaveBlocks
-                .AnyAsync(lb => lb.UserID == userId &&
-                                lb.Status == LeaveStatus.Active &&
-                                targetDate >= lb.StartDate.Date &&
-                                targetDate <= lb.EndDate.Date);
+            bool hasLeave = activeLeaves.Any(lb => targetDate >= lb.StartDate.Date && targetDate <= lb.EndDate.Date);
 
             if (hasLeave)
             {
-                var leaveViolation = new SchedulingConstraintViolation
+                _context.SchedulingConstraintViolations.Add(new SchedulingConstraintViolation
                 {
                     RosterID = rosterId,
                     UserID = userId,
                     ViolationType = ViolationType.UnavailableEmployee,
                     Severity = SeverityLevel.Blocking,
                     Status = ViolationStatus.Open
-                };
-                _context.SchedulingConstraintViolations.Add(leaveViolation);
+                });
             }
 
             // ----------------------------------------------------------------------
-            // RULE 2: Max Weekly Hours Limit (MaxHoursExceeded)
+            // RULE 2: Max Weekly Hours Limit (In-memory calculation)
             // ----------------------------------------------------------------------
-            var weeklyShifts = await _context.ShiftAssignments
-                .Where(sa => sa.RosterID == rosterId && sa.UserID == userId && sa.Status != ShiftAssignmentStatus.Cancelled)
-                .ToListAsync();
-
             double totalWeeklyHours = 0;
             foreach (var s in weeklyShifts)
             {
@@ -80,26 +113,24 @@ namespace ShiftMaster.Application.Implementation
                 }
                 else
                 {
-                    // Safe evaluation wrapper for midnight shift crossings
                     totalWeeklyHours += (duration.Add(TimeSpan.FromDays(1))).TotalHours;
                 }
             }
 
             if (totalWeeklyHours > 40.0)
             {
-                var hoursViolation = new SchedulingConstraintViolation
+                _context.SchedulingConstraintViolations.Add(new SchedulingConstraintViolation
                 {
                     RosterID = rosterId,
                     UserID = userId,
                     ViolationType = ViolationType.MaxHoursExceeded,
                     Severity = SeverityLevel.Warning,
                     Status = ViolationStatus.Open
-                };
-                _context.SchedulingConstraintViolations.Add(hoursViolation);
+                });
             }
 
             // ----------------------------------------------------------------------
-            // RULE 3: Rest Turnaround Window Gap (InsufficientRest)
+            // RULE 3: Rest Turnaround Window Gap (Completely in-memory loop)
             // ----------------------------------------------------------------------
             foreach (var otherShift in weeklyShifts.Where(sa => sa.AssignmentID != assignmentId))
             {
@@ -117,21 +148,44 @@ namespace ShiftMaster.Application.Implementation
                         (gapAfterOther > 0 && gapAfterOther < 11.0) ||
                         (gapBeforeOther > 0 && gapBeforeOther < 11.0))
                     {
-                        var restViolation = new SchedulingConstraintViolation
+                        _context.SchedulingConstraintViolations.Add(new SchedulingConstraintViolation
                         {
                             RosterID = rosterId,
                             UserID = userId,
                             ViolationType = ViolationType.InsufficientRest,
                             Severity = SeverityLevel.Blocking,
                             Status = ViolationStatus.Open
-                        };
-                        _context.SchedulingConstraintViolations.Add(restViolation);
+                        });
                         break;
                     }
                 }
             }
 
+            // ----------------------------------------------------------------------
+            // RULE 4: Skill Coverage Verification (Correctly Placed Outside Loops)
+            // ----------------------------------------------------------------------
+            if (requiredSkills.Any())
+            {
+                // Find if there are any required items missing from employee's collected skills
+                bool missingRequiredSkills = requiredSkills.Except(employeeSkills).Any();
+
+                if (missingRequiredSkills)
+                {
+                    _context.SchedulingConstraintViolations.Add(new SchedulingConstraintViolation
+                    {
+                        RosterID = rosterId,
+                        UserID = userId,
+                        ViolationType = ViolationType.SkillGap, // Matches your actual Enum declaration
+                        Severity = SeverityLevel.Blocking,
+                        Status = ViolationStatus.Open
+                    });
+                }
+            }
+
+            // Save all newly tracked system violations in one single push
             await _context.SaveChangesAsync();
         }
     }
+
 }
+

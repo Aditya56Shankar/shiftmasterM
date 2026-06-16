@@ -13,7 +13,6 @@ namespace Services.DTOs
         [Required(ErrorMessage = "Target employee UserID is required.")]
         public int UserID { get; set; }
 
-        // Kept optional/nullable as requested for temporary standalone development testing
         public int? ShiftPatternID { get; set; }
 
         [Required(ErrorMessage = "Shift calendar date is required.")]

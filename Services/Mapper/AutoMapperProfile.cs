@@ -23,8 +23,12 @@ namespace Services.Mapper
 
             CreateMap<WeeklyRoster, RosterResponseDto>();
 
-
-
+            // New Shift Assignment Mapping 
+            CreateMap<CreateAssignmentDto, ShiftAssignment>()
+                .ForMember(dest => dest.AssignedDate, opt => opt.MapFrom(src => src.AssignedDate.Date))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => ShiftAssignmentStatus.Assigned));
         }
+
+    
     }
 }

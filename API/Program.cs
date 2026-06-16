@@ -4,10 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Services.Implementation;
 using Services.Interfaces;
 using Services.Mapper;
+using ShiftMaster.Application.Implementation;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ DB
+// ✅ Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -15,14 +16,21 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ AutoMapper (v16 correct way)
-builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+// ✅ AutoMapper (Correct)
 
-// ✅ Repository
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+});
+
+
 builder.Services.AddScoped<IWeeklyRosterRepository, WeeklyRosterRepository>();
+builder.Services.AddScoped<IRosterValidationService, RosterValidationService>();
 
 // ✅ Controllers
 builder.Services.AddControllers();
+
+// ✅ OpenAPI
 builder.Services.AddOpenApi();
 
 var app = builder.Build();

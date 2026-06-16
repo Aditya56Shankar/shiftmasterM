@@ -3,14 +3,42 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialSetup : Migration
+    public partial class initialcreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "Departments",
+                columns: table => new
+                {
+                    departmentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    departmentName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Departments", x => x.departmentId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Roles",
+                columns: table => new
+                {
+                    roleId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    roleName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Roles", x => x.roleId);
+                });
+
             migrationBuilder.CreateTable(
                 name: "AttendanceRecords",
                 columns: table => new
@@ -130,8 +158,7 @@ namespace Data.Migrations
                     Reason = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     UserID = table.Column<int>(type: "int", nullable: false),
-                    ApprovedByID = table.Column<int>(type: "int", nullable: true),
-                    UserID1 = table.Column<int>(type: "int", nullable: true)
+                    ApprovedByID = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -183,9 +210,8 @@ namespace Data.Migrations
                     ViolationType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Severity = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    RosterID = table.Column<int>(type: "int", nullable: false),
-                    UserID = table.Column<int>(type: "int", nullable: false),
-                    WeeklyRosterRosterID = table.Column<int>(type: "int", nullable: true)
+                    RosterID = table.Column<int>(type: "int", nullable: true),
+                    UserID = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -205,9 +231,7 @@ namespace Data.Migrations
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     RosterID = table.Column<int>(type: "int", nullable: false),
                     UserID = table.Column<int>(type: "int", nullable: false),
-                    ShiftPatternID = table.Column<int>(type: "int", nullable: false),
-                    UserID1 = table.Column<int>(type: "int", nullable: true),
-                    WeeklyRosterRosterID = table.Column<int>(type: "int", nullable: true)
+                    ShiftPatternID = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -244,11 +268,18 @@ namespace Data.Migrations
                     SkillName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     MinCountPerShift = table.Column<int>(type: "int", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    LocationID = table.Column<int>(type: "int", nullable: false)
+                    LocationID = table.Column<int>(type: "int", nullable: false),
+                    DepartmentID = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SkillRequirements", x => x.SkillReqID);
+                    table.ForeignKey(
+                        name: "FK_SkillRequirements_Departments_DepartmentID",
+                        column: x => x.DepartmentID,
+                        principalTable: "Departments",
+                        principalColumn: "departmentId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -310,16 +341,29 @@ namespace Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EmployeeID = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Role = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Email = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    LocationID = table.Column<int>(type: "int", nullable: false)
+                    LocationID = table.Column<int>(type: "int", nullable: false),
+                    RoleID = table.Column<int>(type: "int", nullable: false),
+                    DepartmentID = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.UserID);
+                    table.ForeignKey(
+                        name: "FK_Users_Departments_DepartmentID",
+                        column: x => x.DepartmentID,
+                        principalTable: "Departments",
+                        principalColumn: "departmentId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Users_Roles_RoleID",
+                        column: x => x.RoleID,
+                        principalTable: "Roles",
+                        principalColumn: "roleId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -333,7 +377,7 @@ namespace Data.Migrations
                     City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     OperatingHours = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    ManagerID = table.Column<int>(type: "int", nullable: false)
+                    ManagerID = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -354,27 +398,74 @@ namespace Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     WeekStartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     WeekEndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PublishedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    PublishedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    LocationID = table.Column<int>(type: "int", nullable: false),
-                    CreatedByID = table.Column<int>(type: "int", nullable: false)
+                    LocationID = table.Column<int>(type: "int", nullable: true),
+                    CreatedByID = table.Column<int>(type: "int", nullable: true),
+                    DepartmentID = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_WeeklyRosters", x => x.RosterID);
                     table.ForeignKey(
+                        name: "FK_WeeklyRosters_Departments_DepartmentID",
+                        column: x => x.DepartmentID,
+                        principalTable: "Departments",
+                        principalColumn: "departmentId");
+                    table.ForeignKey(
                         name: "FK_WeeklyRosters_Users_CreatedByID",
                         column: x => x.CreatedByID,
                         principalTable: "Users",
-                        principalColumn: "UserID",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "UserID");
                     table.ForeignKey(
                         name: "FK_WeeklyRosters_WorkLocations_LocationID",
                         column: x => x.LocationID,
                         principalTable: "WorkLocations",
-                        principalColumn: "LocationID",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "LocationID");
                 });
+
+            migrationBuilder.InsertData(
+                table: "Departments",
+                columns: new[] { "departmentId", "departmentName" },
+                values: new object[,]
+                {
+                    { 1, "Production" },
+                    { 2, "Maintenance" },
+                    { 3, "Quality Control" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Roles",
+                columns: new[] { "roleId", "roleName" },
+                values: new object[,]
+                {
+                    { 1, "Admin" },
+                    { 2, "Employee" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "WorkLocations",
+                columns: new[] { "LocationID", "City", "LocationName", "ManagerID", "OperatingHours", "Status", "Type" },
+                values: new object[,]
+                {
+                    { 1, "Chennai", "Chennai Plant", null, "09:00-21:00", "Active", "Store" },
+                    { 2, "Bangalore", "Bangalore Hub", null, "08:00-20:00", "Active", "Store" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "ShiftPatterns",
+                columns: new[] { "PatternID", "BreakMinutes", "DurationHours", "EndTime", "LocationID", "MinStaffingLevel", "PatternName", "ShiftType", "StartTime", "Status" },
+                values: new object[,]
+                {
+                    { 1, 0, 0m, new TimeSpan(0, 17, 0, 0, 0), 1, 2, "Morning Shift", "Morning", new TimeSpan(0, 9, 0, 0, 0), "Active" },
+                    { 2, 0, 0m, new TimeSpan(0, 1, 0, 0, 0), 1, 2, "Evening Shift", "Afternoon", new TimeSpan(0, 17, 0, 0, 0), "Active" },
+                    { 3, 0, 0m, new TimeSpan(0, 9, 0, 0, 0), 2, 1, "Night Shift", "Night", new TimeSpan(0, 1, 0, 0, 0), "Active" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "UserID", "DepartmentID", "Email", "EmployeeID", "LocationID", "Name", "PasswordHash", "Phone", "RoleID", "Status" },
+                values: new object[] { 1, 1, "admin@shiftmaster.com", "EMP001", 1, "Admin User", "AQAAAAEAACcQAAAAEExampleHashedPassword==", "9876543210", 1, "Active" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AttendanceRecords_AssignmentID",
@@ -433,11 +524,6 @@ namespace Data.Migrations
                 column: "UserID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_LeaveBlocks_UserID1",
-                table: "LeaveBlocks",
-                column: "UserID1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Notifications_UserID",
                 table: "Notifications",
                 column: "UserID");
@@ -463,11 +549,6 @@ namespace Data.Migrations
                 column: "UserID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SchedulingConstraintViolations_WeeklyRosterRosterID",
-                table: "SchedulingConstraintViolations",
-                column: "WeeklyRosterRosterID");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ShiftAssignments_RosterID",
                 table: "ShiftAssignments",
                 column: "RosterID");
@@ -483,19 +564,14 @@ namespace Data.Migrations
                 column: "UserID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ShiftAssignments_UserID1",
-                table: "ShiftAssignments",
-                column: "UserID1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ShiftAssignments_WeeklyRosterRosterID",
-                table: "ShiftAssignments",
-                column: "WeeklyRosterRosterID");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_ShiftPatterns_LocationID",
                 table: "ShiftPatterns",
                 column: "LocationID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SkillRequirements_DepartmentID",
+                table: "SkillRequirements",
+                column: "DepartmentID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SkillRequirements_LocationID",
@@ -538,14 +614,35 @@ namespace Data.Migrations
                 column: "UserID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Users_DepartmentID",
+                table: "Users",
+                column: "DepartmentID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_EmployeeID",
+                table: "Users",
+                column: "EmployeeID",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Users_LocationID",
                 table: "Users",
                 column: "LocationID");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Users_RoleID",
+                table: "Users",
+                column: "RoleID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_WeeklyRosters_CreatedByID",
                 table: "WeeklyRosters",
                 column: "CreatedByID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WeeklyRosters_DepartmentID",
+                table: "WeeklyRosters",
+                column: "DepartmentID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_WeeklyRosters_LocationID",
@@ -563,7 +660,7 @@ namespace Data.Migrations
                 column: "AssignmentID",
                 principalTable: "ShiftAssignments",
                 principalColumn: "AssignmentID",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_AttendanceRecords_Users_UserID",
@@ -571,7 +668,7 @@ namespace Data.Migrations
                 column: "UserID",
                 principalTable: "Users",
                 principalColumn: "UserID",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_AuditLogs_Users_UserID",
@@ -579,7 +676,7 @@ namespace Data.Migrations
                 column: "UserID",
                 principalTable: "Users",
                 principalColumn: "UserID",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_AvailabilitySubmissions_Users_UserID",
@@ -587,7 +684,7 @@ namespace Data.Migrations
                 column: "UserID",
                 principalTable: "Users",
                 principalColumn: "UserID",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_CoverAssignments_ShiftAssignments_OriginalAssignmentID",
@@ -595,7 +692,7 @@ namespace Data.Migrations
                 column: "OriginalAssignmentID",
                 principalTable: "ShiftAssignments",
                 principalColumn: "AssignmentID",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_CoverAssignments_Users_AssignedByID",
@@ -619,7 +716,7 @@ namespace Data.Migrations
                 column: "UserID",
                 principalTable: "Users",
                 principalColumn: "UserID",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_LabourReports_Users_GeneratedByID",
@@ -645,19 +742,12 @@ namespace Data.Migrations
                 onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
-                name: "FK_LeaveBlocks_Users_UserID1",
-                table: "LeaveBlocks",
-                column: "UserID1",
-                principalTable: "Users",
-                principalColumn: "UserID");
-
-            migrationBuilder.AddForeignKey(
                 name: "FK_Notifications_Users_UserID",
                 table: "Notifications",
                 column: "UserID",
                 principalTable: "Users",
                 principalColumn: "UserID",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_OvertimeAuthorisations_Users_AuthorisedByID",
@@ -692,19 +782,11 @@ namespace Data.Migrations
                 onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
-                name: "FK_SchedulingConstraintViolations_WeeklyRosters_WeeklyRosterRosterID",
-                table: "SchedulingConstraintViolations",
-                column: "WeeklyRosterRosterID",
-                principalTable: "WeeklyRosters",
-                principalColumn: "RosterID");
-
-            migrationBuilder.AddForeignKey(
                 name: "FK_ShiftAssignments_ShiftPatterns_ShiftPatternID",
                 table: "ShiftAssignments",
                 column: "ShiftPatternID",
                 principalTable: "ShiftPatterns",
-                principalColumn: "PatternID",
-                onDelete: ReferentialAction.Cascade);
+                principalColumn: "PatternID");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_ShiftAssignments_Users_UserID",
@@ -715,13 +797,6 @@ namespace Data.Migrations
                 onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
-                name: "FK_ShiftAssignments_Users_UserID1",
-                table: "ShiftAssignments",
-                column: "UserID1",
-                principalTable: "Users",
-                principalColumn: "UserID");
-
-            migrationBuilder.AddForeignKey(
                 name: "FK_ShiftAssignments_WeeklyRosters_RosterID",
                 table: "ShiftAssignments",
                 column: "RosterID",
@@ -730,19 +805,12 @@ namespace Data.Migrations
                 onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
-                name: "FK_ShiftAssignments_WeeklyRosters_WeeklyRosterRosterID",
-                table: "ShiftAssignments",
-                column: "WeeklyRosterRosterID",
-                principalTable: "WeeklyRosters",
-                principalColumn: "RosterID");
-
-            migrationBuilder.AddForeignKey(
                 name: "FK_ShiftPatterns_WorkLocations_LocationID",
                 table: "ShiftPatterns",
                 column: "LocationID",
                 principalTable: "WorkLocations",
                 principalColumn: "LocationID",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_SkillRequirements_WorkLocations_LocationID",
@@ -750,7 +818,7 @@ namespace Data.Migrations
                 column: "LocationID",
                 principalTable: "WorkLocations",
                 principalColumn: "LocationID",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
                 name: "FK_SwapRequests_Users_ApprovedByID",
@@ -858,6 +926,12 @@ namespace Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Departments");
+
+            migrationBuilder.DropTable(
+                name: "Roles");
 
             migrationBuilder.DropTable(
                 name: "WorkLocations");
