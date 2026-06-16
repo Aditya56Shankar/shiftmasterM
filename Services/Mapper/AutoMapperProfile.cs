@@ -37,6 +37,26 @@ namespace Services.Mapper
 
             CreateMap<WeeklyRoster, SupervisorRosterResponseDto>();
 
+            //post available
+            CreateMap<AvailabilityRequestDto, AvailabilitySubmission>();
+            CreateMap<AvailabilitySubmission, AvailabilityResponseDto>();
+
+            //post leave
+            CreateMap<LeaveBlockRequestDto, LeaveBlock>();
+            CreateMap<LeaveBlock, LeaveBlockResponseDto>()
+                .ForMember(dest => dest.Reason, opt => opt.MapFrom(src => src.Reason.ToString()))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+
+            //post employee skill
+            CreateMap<EmployeeSkillRequestDto, EmployeeSkill>();
+
+            CreateMap<EmployeeSkill, EmployeeSkillResponseDto>()
+                .ForMember(dest => dest.ProficiencyLevel,
+                    opt => opt.MapFrom(src => src.ProficiencyLevel.ToString()))
+                .ForMember(dest => dest.Status,
+                    opt => opt.MapFrom(src => src.Status.ToString()));
+
+
 
 
 
