@@ -109,11 +109,12 @@ $RECYCLE.BIN/
 
 # Environment variables
 .env
-.env.*	
+.env.*	  
 
 # secrets
 secrets.json
 appsettings.Development.json
-
+appsettings.json
 # Ignoring the github folder
 .github/
+Migrations/
