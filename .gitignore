@@ -113,8 +113,10 @@ $RECYCLE.BIN/
 
 # secrets
 secrets.json
-appsettings.Development.json
+
+Migrations/
+Data/Migrations/
 appsettings.json
+appsettings.Development.json
 # Ignoring the github folder
 .github/
-Migrations/
