@@ -8,6 +8,14 @@ using ShiftMaster.Application.Implementation;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+
+
 // ✅ Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -23,7 +31,9 @@ builder.Services.AddAutoMapper(cfg =>
     cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
 });
 
-
+builder.Services.AddScoped<ILeaveBlockRepository, LeaveBlockRepository>();
+builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>(); 
+builder.Services.AddScoped<IEmployeeSkillRepository, EmployeeSkillRepository>();
 builder.Services.AddScoped<IWeeklyRosterRepository, WeeklyRosterRepository>();
 builder.Services.AddScoped<IRosterValidationService, RosterValidationService>();
 
