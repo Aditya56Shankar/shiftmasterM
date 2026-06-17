@@ -17,7 +17,8 @@ namespace shiftmaster.models
         [Required] public TimesheetStatus Status { get; set; }
 
         // Foreign Keys & Navigation
-        //[Required] 
+
+        [Required] 
         public int UserID { get; set; }
         public User Employee { get; set; }
 
