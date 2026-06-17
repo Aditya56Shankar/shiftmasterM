@@ -36,6 +36,8 @@ builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
 builder.Services.AddScoped<IEmployeeSkillRepository, EmployeeSkillRepository>();
 builder.Services.AddScoped<IWeeklyRosterRepository, WeeklyRosterRepository>();
 builder.Services.AddScoped<IRosterValidationService, RosterValidationService>();
+builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+
 
 // ✅ Controllers
 builder.Services.AddControllers();
