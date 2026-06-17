@@ -36,7 +36,8 @@ namespace API.Controllers
             return Ok(mapper.Map<RosterResponseDto>(res));
         }
 
-        //HLD Endpoint: GET /api/rosters/{locationId}/{week} (Action: Get roster)//Note: '{week}' represents the week start date string (e.g., "2026-06-15")        [HttpGet]
+        //HLD Endpoint: GET /api/rosters/{locationId}/{week} (Action: Get roster)//Note: '{week}' represents the week start date string (e.g., "2026-06-15")
+        [HttpGet]
         [Route("{locationId:int}/{week}")]
         public async Task<IActionResult> GetRoster(int locationId, string week)
         {
