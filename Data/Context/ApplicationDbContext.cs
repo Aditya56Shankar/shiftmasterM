@@ -221,6 +221,34 @@ namespace Data.Context
                 .HasIndex(u => u.EmployeeID)
                 .IsUnique();
 
+            // Configure AuditLog entity with indexes for performance
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => a.Timestamp)
+                .IsUnique(false)
+                .HasDatabaseName("IX_AuditLogs_Timestamp");
+
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => a.UserID)
+                .IsUnique(false)
+                .HasDatabaseName("IX_AuditLogs_UserID");
+
+            modelBuilder.Entity<AuditLog>()
+                .HasIndex(a => new { a.UserID, a.Timestamp })
+                .IsUnique(false)
+                .HasDatabaseName("IX_AuditLogs_UserID_Timestamp");
+
+            // Configure foreign key for AuditLog.UserID -> User.UserID (nullable)
+            modelBuilder.Entity<AuditLog>()
+                .HasOne(a => a.Actor)
+                .WithMany()
+                .HasForeignKey(a => a.UserID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure optional relationship: AuditLog can exist without Actor (for anonymous events)
+            modelBuilder.Entity<AuditLog>()
+                .Navigation(a => a.Actor)
+                .IsRequired(false);
+
             // ----------------------------------------------------------------------
             // GLOBAL RULE: Disable Cascade Deletes for the entire database!
             // (Safely moved out of the deleted helper method)

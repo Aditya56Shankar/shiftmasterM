@@ -4,6 +4,7 @@ using Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260612100954_AddAuthenticationFieldsToAuditLog")]
+    partial class AddAuthenticationFieldsToAuditLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -178,18 +181,22 @@ namespace Data.Migrations
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("AuthMethod")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("ClientAppVersion")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("CorrelationId")
+                        .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("Details")
+                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -199,6 +206,7 @@ namespace Data.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("IPAddress")
+                        .IsRequired()
                         .HasMaxLength(45)
                         .HasColumnType("nvarchar(45)");
 
@@ -209,6 +217,7 @@ namespace Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Source")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
@@ -216,6 +225,7 @@ namespace Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserAgent")
+                        .IsRequired()
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
 
