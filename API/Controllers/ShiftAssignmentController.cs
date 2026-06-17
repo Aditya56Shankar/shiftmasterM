@@ -6,6 +6,8 @@ using Services.DTOs;
 using Services.Interfaces;
 using shiftmaster.models;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper; 
+using System.Threading.Tasks;
 
 namespace API.Controllers
 {
@@ -15,14 +17,19 @@ namespace API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IRosterValidationService _validationService;
+        private readonly IMapper _mapper; // Added internal read-only private field tracking
 
-        public ShiftAssignmentController(ApplicationDbContext context, IRosterValidationService validationService)
+        // Inject IMapper into your constructor alongside existing services
+        public ShiftAssignmentController(
+            ApplicationDbContext context,
+            IRosterValidationService validationService,
+            IMapper mapper)
         {
             _context = context;
             _validationService = validationService;
+            _mapper = mapper;
         }
 
-        // HLD Endpoint: POST /api/shiftassignments (Action: Assign employee to shift)
         [HttpPost]
         public async Task<IActionResult> AssignShift([FromBody] CreateAssignmentDto dto)
         {
@@ -31,22 +38,13 @@ namespace API.Controllers
             var rosterExists = await _context.WeeklyRosters.AnyAsync(r => r.RosterID == dto.RosterID);
             if (!rosterExists) return NotFound($"Parent Weekly Roster with ID {dto.RosterID} does not exist.");
 
-            var assignment = new ShiftAssignment
-            {
-                RosterID = dto.RosterID,
-                UserID = dto.UserID,
-                ShiftPatternID = dto.ShiftPatternID,
-                AssignedDate = dto.AssignedDate.Date,
-                StartTime = dto.StartTime,
-                EndTime = dto.EndTime,
-                Role = dto.Role,
-                Status = ShiftAssignmentStatus.Assigned
-            };
+            // Use AutoMapper to convert your DTO into the raw Database Entity Model object
+            var assignment = _mapper.Map<ShiftAssignment>(dto);
 
             _context.ShiftAssignments.Add(assignment);
             await _context.SaveChangesAsync();
 
-            // Automatically run compliance evaluations behind the scenes
+            // run compliance evaluations behind the scenes
             await _validationService.ValidateAssignmentConstraintsAsync(assignment.AssignmentID);
 
             return Ok(assignment);

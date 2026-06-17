@@ -36,6 +36,15 @@ namespace API.Controllers
             await repository.AddAsync(res);
 
             
+
+                LocationID = dto.LocationID,
+                DepartmentID = dto.DepartmentID,
+                WeekStartDate = dto.WeekStartDate.Date,
+                WeekEndDate = dto.WeekStartDate.Date.AddDays(6),
+                CreatedByID = dto.CreatedByID,
+                Status = RosterStatus.Draft
+            };
+
             return Ok(mapper.Map<RosterResponseDto>(res));
         }
 

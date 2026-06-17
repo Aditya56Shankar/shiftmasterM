@@ -71,7 +71,7 @@ $RECYCLE.BIN/
 # ENVIRONMENT FILES
 # =========================
 .env
-.env.*
+.env.*	  
 
 # =========================
 # NUGET
@@ -90,20 +90,9 @@ $RECYCLE.BIN/
 # =========================
 secrets.json
 
-
 Migrations/
+Data/Migrations/
 appsettings.json
 appsettings.Development.json
-
-
-
-# =========================
-# IMPORTANT NOTES
-# =========================
-# ✅ Migrations WILL be committed
-# ✅ appsettings.json WILL be committed
-# ✅ appsettings.Development.json can be ignored if needed
-
-# Uncomment below ONLY if you want to ignore local dev config
-# appsettings.Development.json
-``
+# Ignoring the github folder
+.github/

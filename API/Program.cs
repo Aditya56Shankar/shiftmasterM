@@ -4,19 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Services.Implementation;
 using Services.Interfaces;
 using Services.Mapper;
+using ShiftMaster.Application.Implementation;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(
-            new System.Text.Json.Serialization.JsonStringEnumConverter());
-    });
-
-
-// ✅ DB
+// ✅ Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -24,20 +16,21 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ✅ AutoMapper (v16 correct way)
+// ✅ AutoMapper (Correct)
 
-builder.Services.AddAutoMapper(cfg => { },
-    typeof(AutoMapperProfile).Assembly);
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+});
 
-// ✅ Repository
+
 builder.Services.AddScoped<IWeeklyRosterRepository, WeeklyRosterRepository>();
-builder.Services.AddScoped<ILeaveBlockRepository, LeaveBlockRepository>();
-builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
-builder.Services.AddScoped<IEmployeeSkillRepository, EmployeeSkillRepository>();
-
+builder.Services.AddScoped<IRosterValidationService, RosterValidationService>();
 
 // ✅ Controllers
 builder.Services.AddControllers();
+
+// ✅ OpenAPI
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
