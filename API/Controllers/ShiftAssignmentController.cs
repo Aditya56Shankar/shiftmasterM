@@ -41,6 +41,7 @@ namespace API.Controllers
             // Use AutoMapper to convert your DTO into the raw Database Entity Model object
             var assignment = _mapper.Map<ShiftAssignment>(dto);
 
+
             _context.ShiftAssignments.Add(assignment);
             await _context.SaveChangesAsync();
 

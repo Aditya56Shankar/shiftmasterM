@@ -358,6 +358,182 @@ namespace Data.Context
 
             );
 
+
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    UserID = 2,
+                    EmployeeID = "EMP002",
+                    Name = "Employee One",
+                    Email = "emp1@shift.com",
+                    PasswordHash = "xyz",
+                    Phone = "9999999999",
+                    Status = UserStatus.Active,
+                    LocationID = 1,
+                    RoleID = 2,
+                    DepartmentID = 1
+                },
+                new User
+                {
+                    UserID = 3,
+                    EmployeeID = "EMP003",
+                    Name = "Employee Two",
+                    Email = "emp2@shift.com",
+                    PasswordHash = "xyz",
+                    Phone = "8888888888",
+                    Status = UserStatus.Active,
+                    LocationID = 1,
+                    RoleID = 2,
+                    DepartmentID = 1
+                }
+            );
+
+            modelBuilder.Entity<WeeklyRoster>().HasData(
+                new WeeklyRoster
+                {
+                    RosterID = 1,
+                    WeekStartDate = new DateTime(2026, 6, 16),
+                    WeekEndDate = new DateTime(2026, 6, 22),
+                    Status = RosterStatus.Draft
+                }
+            );
+
+            modelBuilder.Entity<ShiftAssignment>().HasData(
+            new ShiftAssignment
+            {
+                AssignmentID = 1,
+                RosterID = 1,
+                UserID = 2,
+                AssignedDate = new DateTime(2026, 6, 18),
+                StartTime = new TimeSpan(9, 0, 0),
+                EndTime = new TimeSpan(17, 0, 0),
+                Role = "Operator",
+                Status = ShiftAssignmentStatus.Assigned
+            },
+            new ShiftAssignment
+            {
+                AssignmentID = 2,
+                RosterID = 1,
+                UserID = 3,
+                AssignedDate = new DateTime(2026, 6, 18),
+                StartTime = new TimeSpan(9, 0, 0),
+                EndTime = new TimeSpan(17, 0, 0),
+                Role = "Operator",
+                Status = ShiftAssignmentStatus.Assigned
+            }
+);
+
+
+            modelBuilder.Entity<EmployeeSkill>().HasData(
+    new EmployeeSkill
+    {
+        EmpSkillID = 1,
+        UserID = 2,
+        SkillName = "Machine Operation",
+        Status = ActiveStatus.Active
+    }
+);
+
+
+            modelBuilder.Entity<SkillRequirement>().HasData(
+    new SkillRequirement
+
+    {
+        SkillReqID = 1,
+        DepartmentID = 1,   // ✅ FIXED (must exist in Departments table)
+        LocationID = 1,
+        MinCountPerShift = 1,
+        SkillName = "Welding",
+        Status = ActiveStatus.Active
+    }
+
+);
+            modelBuilder.Entity<CoverAssignment>().HasData(
+    new CoverAssignment
+    {
+        CoverID = 1,   // ✅ required for HasData
+
+        CoverType = CoverType.Mandatory,   // ✅ enum (no string)
+        OvertimeApplicable = true,
+
+        Status = CoverStatus.Completed,  // ✅ enum (not string)
+
+        OriginalAssignmentID = 9,  // ✅ must exist in ShiftAssignments
+        CoveringUserID = 2,        // ✅ must exist in Users
+        AssignedByID = 1           // ✅ must exist in Users
+    }
+);
+
+
+            modelBuilder.Entity<AvailabilitySubmission>().HasData(
+    new AvailabilitySubmission
+    {
+
+        AvailabilityID = 1,
+        UserID = 2,
+        WeekStartDate = new DateTime(2026, 6, 16),
+
+        AvailableDays = "Mon,Tue,Wed,Thu,Fri",  // REQUIRED
+        PreferredShiftType = ShiftType.Night.ToString(), // if required
+        MaxHoursPerWeek = 40,
+        SubmittedDate = new DateTime(2026, 6, 15),
+
+        Status = AvailabilityStatus.Acknowledged
+
+    }
+);
+
+            modelBuilder.Entity<LeaveBlock>().HasData(
+    new LeaveBlock
+    {
+        LeaveBlockID = 1,
+        UserID = 2,
+        StartDate = new DateTime(2026, 6, 18),
+        EndDate = new DateTime(2026, 6, 18),
+        Status = LeaveStatus.Active
+    }
+);
+
+
+            modelBuilder.Entity<SwapRequest>().HasData(
+    new SwapRequest
+    {
+
+
+        SwapID = 1,
+        RequesterUserID = 2,
+        TargetUserID = 3,
+        OriginalAssignmentID = 1,
+        ProposedAssignmentID = 2,
+
+        Reason = "Need to swap due to personal work",
+
+        ApprovedByID = 1,  // ✅ recommended if required
+
+        Status = ApprovalStatus.Approved
+
+
+    }
+);
+
+            modelBuilder.Entity<SwapRequest>().HasData(
+    new SwapRequest
+    {
+        SwapID = 2,
+        RequesterUserID = 2,
+        TargetUserID = 3,
+        OriginalAssignmentID = 1,
+        ProposedAssignmentID = 2,
+
+       Reason = "Shift swapped and completed",
+
+        ApprovedByID = 1,   // Admin user you already seeded
+
+        Status = ApprovalStatus.Completed
+    }
+);
+
+
         }
     }
 }

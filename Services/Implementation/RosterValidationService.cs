@@ -8,7 +8,7 @@ using Services.Interfaces;
 
 using shiftmaster.models;
 
-using System; 
+using System;
 
 using System.Linq;
 
@@ -40,6 +40,7 @@ namespace ShiftMaster.Application.Implementation
 
         public async Task ValidateAssignmentConstraintsAsync(int assignmentId)
         {
+
             // 1. Fetch the target shift assignment record
             var shift = await _context.ShiftAssignments
                 .FirstOrDefaultAsync(sa => sa.AssignmentID == assignmentId);
@@ -181,6 +182,77 @@ namespace ShiftMaster.Application.Implementation
                     });
                 }
             }
+
+
+
+
+            if (shift.Status == ShiftAssignmentStatus.Cancelled)
+            {
+                await _context.SaveChangesAsync();
+                return;
+            }
+
+
+
+            bool isCovered = await _context.CoverAssignments
+                .AnyAsync(c =>
+                    c.CoveringUserID == shift.UserID &&
+                    c.Status == CoverStatus.Completed);
+
+            if (isCovered)
+            {
+                shift.Status = ShiftAssignmentStatus.Covered;
+                await _context.SaveChangesAsync();
+                return;
+            }
+
+
+            bool isSwapped = await _context.SwapRequests
+                .AnyAsync(s =>
+                    (s.RequesterUserID == shift.UserID ||
+                     s.TargetUserID == shift.UserID) &&
+                    s.Status == ApprovalStatus.Approved);
+
+            if (isSwapped)
+            {
+                shift.Status = ShiftAssignmentStatus.Swapped;
+                await _context.SaveChangesAsync();
+                return;
+            }
+
+
+
+
+            
+
+            bool isConfirmed = await _context.AvailabilitySubmissions
+                .AnyAsync(a =>
+                    a.UserID == userId &&
+                    a.Status == AvailabilityStatus.Acknowledged &&
+                    a.WeekStartDate <= targetDate &&
+                    a.WeekStartDate.AddDays(6) >= targetDate);
+
+            if (isConfirmed)
+            {
+                shift.Status = ShiftAssignmentStatus.Confirmed;
+                await _context.SaveChangesAsync();
+                return;
+            }
+
+            // ✅ 5. Violations
+            bool hasBlockingViolation = await _context.SchedulingConstraintViolations
+                .AnyAsync(v =>
+                    v.RosterID == rosterId &&
+                    v.UserID == userId &&
+                    v.Severity == SeverityLevel.Blocking &&
+                    v.Status == ViolationStatus.Open);
+
+            shift.Status = hasBlockingViolation
+                ? ShiftAssignmentStatus.Cancelled
+                : ShiftAssignmentStatus.Assigned;
+
+
+
 
             // Save all newly tracked system violations in one single push
             await _context.SaveChangesAsync();
