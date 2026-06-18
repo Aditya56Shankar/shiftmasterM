@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using AutoMapper;
+﻿using AutoMapper;
 using Data.Context;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Services.DTOs;
 using Services.Interfaces;
 using shiftmaster.models;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Services.Implementation
 {
@@ -24,12 +25,25 @@ namespace Services.Implementation
         }
 
 
+
         public async Task<WeeklyRoster> AddAsync(WeeklyRoster roster)
         {
+            var today = DateTime.UtcNow.Date;
+
+            if (today < roster.WeekStartDate)
+            {
+                roster.Status = RosterStatus.Draft;
+            }
+            else
+            {
+                roster.Status = RosterStatus.Published;
+            }
+
             await db.WeeklyRosters.AddAsync(roster);
             await db.SaveChangesAsync();
             return roster;
         }
+
 
         public async Task<SupervisorRosterResponseDto?> GetRosterAsync(int locationId, DateTime weekStartDate)
         {
@@ -72,8 +86,26 @@ namespace Services.Implementation
 
             response.ShiftAssignments = assignmentDtos;
             response.Violations = mapper.Map<List<ViolationViewDto>>(roster.Violations ?? new List<SchedulingConstraintViolation>());
-
+            UpdateRosterStatus(roster);
             return response;
+        }
+        private void UpdateRosterStatus(WeeklyRoster roster)
+        {
+            var today = DateTime.UtcNow.Date;
+
+            // ✅ If week not started
+            if (today < roster.WeekStartDate)
+            {
+                roster.Status = RosterStatus.Draft;
+                return;
+            }
+
+            // ✅ If week started -> Published
+            if (today >= roster.WeekStartDate && roster.Status != RosterStatus.Amended)
+            {
+                roster.Status = RosterStatus.Published;
+                return;
+            }
         }
     }
 
