@@ -54,8 +54,13 @@ namespace Services.Mapper
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => ActiveStatus.Active));
 
             CreateMap<EmployeeSkill, EmployeeSkillResponseDto>()
-                .ForMember(dest => dest.ProficiencyLevel, opt => opt.MapFrom(src => src.ProficiencyLevel.ToString()))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+
+
+                .ForMember(dest => dest.ProficiencyLevel,
+                    opt => opt.MapFrom(src => src.ProficiencyLevel.ToString()))
+                .ForMember(dest => dest.Status, 
+                    opt => opt.MapFrom(src => src.Status.ToString()));
+
 
             // ✅ ✅ ATTENDANCE MAPPINGS
             CreateMap<CreateAttendanceDto, AttendanceRecord>();
@@ -69,6 +74,7 @@ namespace Services.Mapper
             CreateMap<TimesheetSummary, TimesheetDtoResponse>()
                 .ForMember(dest => dest.Status,
                     opt => opt.MapFrom(src => src.Status.ToString())); // enum → string
+
         }
 
     }
