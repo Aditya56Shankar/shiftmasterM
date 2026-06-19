@@ -1,6 +1,9 @@
-﻿using AutoMapper;
+﻿using System.Security.Claims;
+using AutoMapper;
 using Data.Context;
 using Domain.Enums;
+using Domain.models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -56,6 +59,35 @@ namespace API.Controllers
 
             return Ok(response);
 
+        }
+
+        [Authorize(Roles = "SchedulingAdmin")]
+        [HttpPut("{id}/approve")]
+        public async Task<IActionResult> ApproveRoster(int id)
+        {
+            var roster = await db.WeeklyRosters.FindAsync(id);
+
+            if (roster == null)
+                return NotFound("Roster not found");
+
+            if (roster.ApprovedByUserID != null)
+                return BadRequest("Roster already approved");
+
+            // ✅ Get User ID from token
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+                return Unauthorized("User ID not found in token");
+
+            roster.ApprovedByUserID = int.Parse(userIdClaim);
+
+            await db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Roster approved by Scheduling Admin",
+                ApprovedBy = roster.ApprovedByUserID,
+            });
         }
 
     }

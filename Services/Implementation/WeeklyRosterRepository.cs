@@ -17,7 +17,7 @@ namespace Services.Implementation
         private readonly ApplicationDbContext db;
 
 
-        private readonly IMapper mapper; 
+        private readonly IMapper mapper;
         public WeeklyRosterRepository(ApplicationDbContext context, IMapper mapper)
         {
             db = context;
@@ -93,19 +93,29 @@ namespace Services.Implementation
         {
             var today = DateTime.UtcNow.Date;
 
-            // ✅ If week not started 
+            // ✅ Published
+            if (roster.PublishedDate != null)
+            {
+                roster.Status = RosterStatus.Published;
+                return;
+            }
+
+            // ✅ Pending approval
+            if (roster.ApprovedByUserID == null)
+            {
+                roster.Status = RosterStatus.PendingApproval;
+                return;
+            }
+
+            // ✅ Draft
             if (today < roster.WeekStartDate)
             {
                 roster.Status = RosterStatus.Draft;
                 return;
             }
 
-            // ✅ If week started -> Published
-            if (today >= roster.WeekStartDate && roster.Status != RosterStatus.Amended)
-            {
-                roster.Status = RosterStatus.Published;
-                return;
-            }
+            // ✅ Rejected
+            roster.Status = RosterStatus.Amended;
         }
     }
 
