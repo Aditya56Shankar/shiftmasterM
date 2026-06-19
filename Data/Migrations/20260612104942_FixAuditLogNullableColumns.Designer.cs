@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260610052850_FixCascadePaths")]
-    partial class FixCascadePaths
+    [Migration("20260612104942_FixAuditLogNullableColumns")]
+    partial class FixAuditLogNullableColumns
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -33,16 +33,11 @@ namespace Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("departmentId"));
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<string>("departmentName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("departmentId");
-
-                    b.HasIndex("TenantId");
 
                     b.ToTable("Departments");
                 });
@@ -55,9 +50,6 @@ namespace Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("roleId"));
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<string>("roleName")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -65,38 +57,7 @@ namespace Data.Migrations
 
                     b.HasKey("roleId");
 
-                    b.HasIndex("TenantId");
-
                     b.ToTable("Roles");
-                });
-
-            modelBuilder.Entity("Domain.models.Tenant", b =>
-                {
-                    b.Property<int>("TenantId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TenantId"));
-
-                    b.Property<string>("CompanyName")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Domain")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.HasKey("TenantId");
-
-                    b.ToTable("Tenants");
                 });
 
             modelBuilder.Entity("ShiftMaster.models.User", b =>
@@ -145,19 +106,16 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.HasKey("UserID");
 
                     b.HasIndex("DepartmentID");
 
+                    b.HasIndex("EmployeeID")
+                        .IsUnique();
+
                     b.HasIndex("LocationID");
 
                     b.HasIndex("RoleID");
-
-                    b.HasIndex("TenantId", "EmployeeID")
-                        .IsUnique();
 
                     b.ToTable("Users");
                 });
@@ -190,9 +148,6 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
@@ -206,8 +161,6 @@ namespace Data.Migrations
 
                     b.HasIndex("AssignmentID")
                         .IsUnique();
-
-                    b.HasIndex("TenantId");
 
                     b.HasIndex("UserID");
 
@@ -227,28 +180,61 @@ namespace Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("AuthMethod")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ClientAppVersion")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("EntityType")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("RecordID")
+                    b.Property<string>("IPAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<bool>("IsSuccess")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("RecordID")
                         .HasColumnType("int");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                    b.Property<string>("Source")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserID")
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<int?>("UserID")
                         .HasColumnType("int");
 
                     b.HasKey("AuditID");
 
-                    b.HasIndex("TenantId");
+                    b.HasIndex("Timestamp")
+                        .HasDatabaseName("IX_AuditLogs_Timestamp");
 
-                    b.HasIndex("UserID");
+                    b.HasIndex("UserID")
+                        .HasDatabaseName("IX_AuditLogs_UserID");
+
+                    b.HasIndex("UserID", "Timestamp")
+                        .HasDatabaseName("IX_AuditLogs_UserID_Timestamp");
 
                     b.ToTable("AuditLogs");
                 });
@@ -282,9 +268,6 @@ namespace Data.Migrations
                     b.Property<DateTime>("SubmittedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
@@ -292,8 +275,6 @@ namespace Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("AvailabilityID");
-
-                    b.HasIndex("TenantId");
 
                     b.HasIndex("UserID");
 
@@ -330,9 +311,6 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.HasKey("CoverID");
 
                     b.HasIndex("AssignedByID");
@@ -340,8 +318,6 @@ namespace Data.Migrations
                     b.HasIndex("CoveringUserID");
 
                     b.HasIndex("OriginalAssignmentID");
-
-                    b.HasIndex("TenantId");
 
                     b.ToTable("CoverAssignments");
                 });
@@ -372,15 +348,10 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
                     b.HasKey("EmpSkillID");
-
-                    b.HasIndex("TenantId");
 
                     b.HasIndex("UserID");
 
@@ -410,14 +381,9 @@ namespace Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.HasKey("ReportID");
 
                     b.HasIndex("GeneratedByID");
-
-                    b.HasIndex("TenantId");
 
                     b.ToTable("LabourReports");
                 });
@@ -449,24 +415,14 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<int>("UserID")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UserID1")
                         .HasColumnType("int");
 
                     b.HasKey("LeaveBlockID");
 
                     b.HasIndex("ApprovedByID");
 
-                    b.HasIndex("TenantId");
-
                     b.HasIndex("UserID");
-
-                    b.HasIndex("UserID1");
 
                     b.ToTable("LeaveBlocks");
                 });
@@ -497,15 +453,10 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
                     b.HasKey("NotificationID");
-
-                    b.HasIndex("TenantId");
 
                     b.HasIndex("UserID");
 
@@ -539,9 +490,6 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
@@ -551,8 +499,6 @@ namespace Data.Migrations
                     b.HasKey("OTID");
 
                     b.HasIndex("AuthorisedByID");
-
-                    b.HasIndex("TenantId");
 
                     b.HasIndex("UserID");
 
@@ -580,9 +526,6 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
@@ -597,8 +540,6 @@ namespace Data.Migrations
                     b.HasKey("ViolationID");
 
                     b.HasIndex("RosterID");
-
-                    b.HasIndex("TenantId");
 
                     b.HasIndex("UserID");
 
@@ -640,16 +581,7 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<int>("UserID")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UserID1")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("WeeklyRosterRosterID")
                         .HasColumnType("int");
 
                     b.HasKey("AssignmentID");
@@ -658,13 +590,7 @@ namespace Data.Migrations
 
                     b.HasIndex("ShiftPatternID");
 
-                    b.HasIndex("TenantId");
-
                     b.HasIndex("UserID");
-
-                    b.HasIndex("UserID1");
-
-                    b.HasIndex("WeeklyRosterRosterID");
 
                     b.ToTable("ShiftAssignments");
                 });
@@ -710,14 +636,9 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.HasKey("PatternID");
 
                     b.HasIndex("LocationID");
-
-                    b.HasIndex("TenantId");
 
                     b.ToTable("ShiftPatterns");
                 });
@@ -749,16 +670,11 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.HasKey("SkillReqID");
 
                     b.HasIndex("DepartmentID");
 
                     b.HasIndex("LocationID");
-
-                    b.HasIndex("TenantId");
 
                     b.ToTable("SkillRequirements");
                 });
@@ -796,9 +712,6 @@ namespace Data.Migrations
                     b.Property<int>("TargetUserID")
                         .HasColumnType("int");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.HasKey("SwapID");
 
                     b.HasIndex("ApprovedByID");
@@ -810,8 +723,6 @@ namespace Data.Migrations
                     b.HasIndex("RequesterUserID");
 
                     b.HasIndex("TargetUserID");
-
-                    b.HasIndex("TenantId");
 
                     b.ToTable("SwapRequests");
                 });
@@ -841,9 +752,6 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("TotalHours")
                         .HasColumnType("decimal(5,2)");
 
@@ -856,8 +764,6 @@ namespace Data.Migrations
                     b.HasKey("TimesheetID");
 
                     b.HasIndex("ApprovedByID");
-
-                    b.HasIndex("TenantId");
 
                     b.HasIndex("UserID");
 
@@ -889,9 +795,6 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("WeekEndDate")
                         .HasColumnType("datetime2");
 
@@ -905,8 +808,6 @@ namespace Data.Migrations
                     b.HasIndex("DepartmentID");
 
                     b.HasIndex("LocationID");
-
-                    b.HasIndex("TenantId");
 
                     b.ToTable("WeeklyRosters");
                 });
@@ -942,9 +843,6 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -954,31 +852,7 @@ namespace Data.Migrations
 
                     b.HasIndex("ManagerID");
 
-                    b.HasIndex("TenantId");
-
                     b.ToTable("WorkLocations");
-                });
-
-            modelBuilder.Entity("Domain.models.Department", b =>
-                {
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("Domain.models.Role", b =>
-                {
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("ShiftMaster.models.User", b =>
@@ -1001,19 +875,11 @@ namespace Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Department");
 
                     b.Navigation("HomeLocation");
 
                     b.Navigation("Role");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.AttendanceRecord", b =>
@@ -1021,12 +887,6 @@ namespace Data.Migrations
                     b.HasOne("shiftmaster.models.ShiftAssignment", "Assignment")
                         .WithOne("Attendance")
                         .HasForeignKey("shiftmaster.models.AttendanceRecord", "AssignmentID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1039,37 +899,20 @@ namespace Data.Migrations
                     b.Navigation("Assignment");
 
                     b.Navigation("Employee");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.AuditLog", b =>
                 {
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("ShiftMaster.models.User", "Actor")
                         .WithMany()
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Actor");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.AvailabilitySubmission", b =>
                 {
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany("Availabilities")
                         .HasForeignKey("UserID")
@@ -1077,8 +920,6 @@ namespace Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Employee");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.CoverAssignment", b =>
@@ -1101,29 +942,15 @@ namespace Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("AssignedBy");
 
                     b.Navigation("CoveringEmployee");
 
                     b.Navigation("OriginalAssignment");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.EmployeeSkill", b =>
                 {
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany("Skills")
                         .HasForeignKey("UserID")
@@ -1131,8 +958,6 @@ namespace Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Employee");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.LabourReport", b =>
@@ -1141,15 +966,7 @@ namespace Data.Migrations
                         .WithMany()
                         .HasForeignKey("GeneratedByID");
 
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("GeneratedBy");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.LeaveBlock", b =>
@@ -1159,37 +976,19 @@ namespace Data.Migrations
                         .HasForeignKey("ApprovedByID")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ShiftMaster.models.User", null)
-                        .WithMany("LeaveBlocks")
-                        .HasForeignKey("UserID1");
-
                     b.Navigation("ApprovedBy");
 
                     b.Navigation("Employee");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.Notification", b =>
                 {
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany("Notifications")
                         .HasForeignKey("UserID")
@@ -1197,8 +996,6 @@ namespace Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Employee");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.OvertimeAuthorisation", b =>
@@ -1206,12 +1003,6 @@ namespace Data.Migrations
                     b.HasOne("ShiftMaster.models.User", "AuthorisedBy")
                         .WithMany()
                         .HasForeignKey("AuthorisedByID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1224,8 +1015,6 @@ namespace Data.Migrations
                     b.Navigation("AuthorisedBy");
 
                     b.Navigation("Employee");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.SchedulingConstraintViolation", b =>
@@ -1233,12 +1022,6 @@ namespace Data.Migrations
                     b.HasOne("shiftmaster.models.WeeklyRoster", "Roster")
                         .WithMany()
                         .HasForeignKey("RosterID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1255,14 +1038,12 @@ namespace Data.Migrations
                     b.Navigation("Employee");
 
                     b.Navigation("Roster");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.ShiftAssignment", b =>
                 {
                     b.HasOne("shiftmaster.models.WeeklyRoster", "Roster")
-                        .WithMany()
+                        .WithMany("ShiftAssignments")
                         .HasForeignKey("RosterID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1273,33 +1054,17 @@ namespace Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ShiftMaster.models.User", null)
-                        .WithMany("Shifts")
-                        .HasForeignKey("UserID1");
-
-                    b.HasOne("shiftmaster.models.WeeklyRoster", null)
-                        .WithMany("ShiftAssignments")
-                        .HasForeignKey("WeeklyRosterRosterID");
-
                     b.Navigation("Employee");
 
                     b.Navigation("Pattern");
 
                     b.Navigation("Roster");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.ShiftPattern", b =>
@@ -1310,15 +1075,7 @@ namespace Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Location");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.SkillRequirement", b =>
@@ -1335,17 +1092,9 @@ namespace Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Department");
 
                     b.Navigation("Location");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.SwapRequest", b =>
@@ -1378,12 +1127,6 @@ namespace Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("ApprovedBy");
 
                     b.Navigation("OriginalAssignment");
@@ -1393,8 +1136,6 @@ namespace Data.Migrations
                     b.Navigation("Requester");
 
                     b.Navigation("Target");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.TimesheetSummary", b =>
@@ -1403,12 +1144,6 @@ namespace Data.Migrations
                         .WithMany()
                         .HasForeignKey("ApprovedByID")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
 
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany()
@@ -1419,8 +1154,6 @@ namespace Data.Migrations
                     b.Navigation("ApprovedBy");
 
                     b.Navigation("Employee");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.WeeklyRoster", b =>
@@ -1443,19 +1176,11 @@ namespace Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("CreatedBy");
 
                     b.Navigation("Department");
 
                     b.Navigation("Location");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("shiftmaster.models.WorkLocation", b =>
@@ -1465,15 +1190,7 @@ namespace Data.Migrations
                         .HasForeignKey("ManagerID")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Domain.models.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Manager");
-
-                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("Domain.models.Department", b =>
@@ -1490,11 +1207,7 @@ namespace Data.Migrations
                 {
                     b.Navigation("Availabilities");
 
-                    b.Navigation("LeaveBlocks");
-
                     b.Navigation("Notifications");
-
-                    b.Navigation("Shifts");
 
                     b.Navigation("Skills");
                 });

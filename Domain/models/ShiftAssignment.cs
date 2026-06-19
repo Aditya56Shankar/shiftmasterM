@@ -24,7 +24,8 @@ namespace shiftmaster.models
         [ForeignKey(nameof(Employee))] public int UserID { get; set; }
         public User Employee { get; set; }
 
-        [Required] public int ShiftPatternID { get; set; }
+        //[Required] 
+        public int? ShiftPatternID { get; set; }
         public ShiftPattern Pattern { get; set; }
 
         // 1-to-1 Relationship

@@ -4,6 +4,7 @@ using Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,13 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260612100954_AddAuthenticationFieldsToAuditLog")]
+    partial class AddAuthenticationFieldsToAuditLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -177,23 +180,68 @@ namespace Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("AuthMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ClientAppVersion")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("EntityType")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("RecordID")
+                    b.Property<string>("IPAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<bool>("IsSuccess")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("RecordID")
                         .HasColumnType("int");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserID")
+                    b.Property<string>("UserAgent")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<int?>("UserID")
                         .HasColumnType("int");
 
                     b.HasKey("AuditID");
 
-                    b.HasIndex("UserID");
+                    b.HasIndex("Timestamp")
+                        .HasDatabaseName("IX_AuditLogs_Timestamp");
+
+                    b.HasIndex("UserID")
+                        .HasDatabaseName("IX_AuditLogs_UserID");
+
+                    b.HasIndex("UserID", "Timestamp")
+                        .HasDatabaseName("IX_AuditLogs_UserID_Timestamp");
 
                     b.ToTable("AuditLogs");
                 });
@@ -543,6 +591,9 @@ namespace Data.Migrations
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
+                    b.Property<int?>("WeeklyRosterRosterID")
+                        .HasColumnType("int");
+
                     b.HasKey("AssignmentID");
 
                     b.HasIndex("RosterID");
@@ -550,6 +601,8 @@ namespace Data.Migrations
                     b.HasIndex("ShiftPatternID");
 
                     b.HasIndex("UserID");
+
+                    b.HasIndex("WeeklyRosterRosterID");
 
                     b.ToTable("ShiftAssignments");
                 });
@@ -865,8 +918,7 @@ namespace Data.Migrations
                     b.HasOne("ShiftMaster.models.User", "Actor")
                         .WithMany()
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Actor");
                 });
@@ -1003,7 +1055,7 @@ namespace Data.Migrations
             modelBuilder.Entity("shiftmaster.models.ShiftAssignment", b =>
                 {
                     b.HasOne("shiftmaster.models.WeeklyRoster", "Roster")
-                        .WithMany("ShiftAssignments")
+                        .WithMany()
                         .HasForeignKey("RosterID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1019,6 +1071,10 @@ namespace Data.Migrations
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("shiftmaster.models.WeeklyRoster", null)
+                        .WithMany("ShiftAssignments")
+                        .HasForeignKey("WeeklyRosterRosterID");
 
                     b.Navigation("Employee");
 

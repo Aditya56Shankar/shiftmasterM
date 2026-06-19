@@ -4,8 +4,15 @@ using System.Text;
 
 namespace Domain.Enums
 {
+
     public enum UserRole
     {
-        Employee, Supervisor, HRBizPartner, OpsManager, Payroll, Admin
+        Employee,
+        Supervisor,
+        HR,
+        OpsManager,
+        Payroll,
+        SchedulingAdmin
     }
+
 }
