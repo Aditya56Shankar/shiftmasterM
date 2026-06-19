@@ -25,6 +25,10 @@ namespace shiftmaster.models
         //[Required] 
         public int? DepartmentID { get; set; }
         public Department Department { get; set; }
+
+
+        public int? ApprovedByUserID { get; set; }
+
         public ICollection<ShiftAssignment> ShiftAssignments { get; set; } = new List<ShiftAssignment>();
         public ICollection<SchedulingConstraintViolation> Violations { get; set; } = new List<SchedulingConstraintViolation>();
     }
