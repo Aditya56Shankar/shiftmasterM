@@ -1,4 +1,5 @@
-﻿using shiftmaster.models;
+﻿using Domain.Enums;
+using shiftmaster.models;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,6 +11,11 @@ namespace Services.Interfaces
     {
         Task<AttendanceRecord> CreateAttendanceAsync(AttendanceRecord record);
         Task<TimesheetSummary> CreateTimesheetAsync(int userId, DateTime weekStart);
+        Task<TimesheetSummary?> UpdateTimesheetStatusAsync(
+        int timesheetId,
+        TimesheetStatus newStatus);
+
+
     }
 
 }

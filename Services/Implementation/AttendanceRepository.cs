@@ -1,5 +1,7 @@
 ﻿using Data.Context;
 using Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Services.Interfaces;
 using shiftmaster.models;
@@ -13,9 +15,9 @@ public class AttendanceRepository : IAttendanceRepository
         _context = context;
     }
 
+    // ✅ CREATE ATTENDANCE
     public async Task<AttendanceRecord> CreateAttendanceAsync(AttendanceRecord record)
     {
-        // ✅ Load only Assignment (NO Include)
         var assignment = await _context.Set<ShiftAssignment>()
             .FirstOrDefaultAsync(a => a.AssignmentID == record.AssignmentID);
 
@@ -27,11 +29,19 @@ public class AttendanceRepository : IAttendanceRepository
         var clockIn = record.ClockIn;
         var clockOut = record.ClockOut;
 
-        // ✅ Calculate work hours
+        // ✅ Safe work hours calc
         if (clockIn.HasValue && clockOut.HasValue)
         {
             var totalMinutes = (clockOut.Value - clockIn.Value).TotalMinutes;
+
+            // ✅ Fix negative (night shift)
+            if (totalMinutes < 0)
+                totalMinutes += 24 * 60;
+
             totalMinutes -= record.BreakMinutesTaken;
+
+            if (totalMinutes < 0)
+                totalMinutes = 0;
 
             record.ActualHoursWorked = (decimal)(totalMinutes / 60.0);
         }
@@ -40,10 +50,8 @@ public class AttendanceRepository : IAttendanceRepository
             record.ActualHoursWorked = 0;
         }
 
-        // ✅ Detect Night Shift
         bool isNightShift = shiftEnd < shiftStart;
 
-        // ✅ Status Logic
         if (!clockIn.HasValue)
         {
             record.Status = AttendanceStatus.Absent;
@@ -53,12 +61,10 @@ public class AttendanceRepository : IAttendanceRepository
             var clockInTime = clockIn.Value.TimeOfDay;
             var clockOutTime = clockOut?.TimeOfDay;
 
-            // ✅ 10 min grace
             var graceStart = shiftStart.Add(TimeSpan.FromMinutes(10));
 
             if (!isNightShift)
             {
-                // ✅ Day shift
                 if (clockInTime > graceStart)
                 {
                     record.Status = AttendanceStatus.Late;
@@ -74,19 +80,12 @@ public class AttendanceRepository : IAttendanceRepository
             }
             else
             {
-                // ✅ Night shift
-                if (clockInTime > graceStart)
-                {
-                    record.Status = AttendanceStatus.Late;
-                }
-                else
-                {
-                    record.Status = AttendanceStatus.Present;
-                }
+                record.Status = clockInTime > graceStart
+                    ? AttendanceStatus.Late
+                    : AttendanceStatus.Present;
             }
         }
 
-        // ✅ Variance (8 hrs standard)
         record.VarianceMinutes = (int)((record.ActualHoursWorked - 8) * 60);
 
         _context.AttendanceRecords.Add(record);
@@ -95,9 +94,18 @@ public class AttendanceRepository : IAttendanceRepository
         return record;
     }
 
+    //  CREATE TIMESHEET (POST → Submitted)
     public async Task<TimesheetSummary> CreateTimesheetAsync(int userId, DateTime weekStart)
     {
         var weekEnd = weekStart.AddDays(7);
+
+        //  Prevent duplicate timesheet
+        var existing = await _context.TimesheetSummaries
+            .FirstOrDefaultAsync(x => x.UserID == userId &&
+                                      x.WeekStartDate == weekStart);
+
+        if (existing != null)
+            throw new InvalidOperationException("Timesheet already exists for this week");
 
         var records = await _context.AttendanceRecords
             .Where(x => x.UserID == userId &&
@@ -123,4 +131,42 @@ public class AttendanceRepository : IAttendanceRepository
 
         return timesheet;
     }
+
+    //  UPDATE STATUS
+    public async Task<TimesheetSummary?> UpdateTimesheetStatusAsync(
+    int timesheetId,
+    TimesheetStatus newStatus)
+    {
+        var timesheet = await _context.TimesheetSummaries
+            .FirstOrDefaultAsync(x => x.TimesheetID == timesheetId);
+
+        if (timesheet == null)
+            return null;
+
+        // ✅ Lock after payroll
+        if (timesheet.Status == TimesheetStatus.SentToPayroll)
+            throw new InvalidOperationException("Timesheet already processed");
+
+        // ✅ Only validate status flow (NOT roles)
+        if (newStatus == TimesheetStatus.Approved)
+        {
+            if (timesheet.Status != TimesheetStatus.Submitted)
+                throw new InvalidOperationException("Timesheet must be Submitted first");
+        }
+        else if (newStatus == TimesheetStatus.SentToPayroll)
+        {
+            if (timesheet.Status != TimesheetStatus.Approved)
+                throw new InvalidOperationException("Timesheet must be Approved first");
+        }
+        else
+        {
+            throw new InvalidOperationException("Invalid status update");
+        }
+
+        timesheet.Status = newStatus;
+
+        await _context.SaveChangesAsync();
+        return timesheet;
+    }
+    
 }

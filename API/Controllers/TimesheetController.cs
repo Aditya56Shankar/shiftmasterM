@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Interfaces;
@@ -28,4 +30,41 @@ public class TimesheetController : ControllerBase
 
         return Ok(response);
     }
+
+    //  PUT → Approve (Supervisor)
+
+    [Authorize(Roles = "ShiftSupervisor")]
+    [HttpPut("{id}/approve")]
+    public async Task<IActionResult> ApproveTimesheet(int id)
+    {
+        var result = await _repo.UpdateTimesheetStatusAsync(
+            id,
+            TimesheetStatus.Approved
+            );
+
+        if (result == null)
+            return NotFound();
+
+        var response = _mapper.Map<TimesheetDtoResponse>(result);
+        return Ok(response);
+    }
+
+
+    [Authorize(Roles = "PayrollExecutive")]
+    [HttpPut("{id}/payroll")]
+    public async Task<IActionResult> SendToPayroll(int id)
+    {
+        var result = await _repo.UpdateTimesheetStatusAsync(
+            id,
+            TimesheetStatus.SentToPayroll
+            );
+
+        if (result == null)
+            return NotFound();
+
+        var response = _mapper.Map<TimesheetDtoResponse>(result);
+        return Ok(response);
+    }
+
+
 }
