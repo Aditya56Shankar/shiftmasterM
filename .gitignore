@@ -117,3 +117,6 @@ appsettings.Development.json
 
 # Ignoring the github folder
 .github/
+
+#Ignore Migration folder
+Data/Migrations/
