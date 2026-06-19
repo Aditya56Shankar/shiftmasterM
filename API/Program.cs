@@ -36,7 +36,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(
 
 
 // ✅ Database
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Also register the factory for AuditService (creates fresh contexts)
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -70,6 +69,7 @@ builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 // ✅ Controllers
 builder.Services.AddAutoMapper(cfg => { }, typeof(CoverAssignmentService).Assembly);
 
+//Repository Dependency Injection
 builder.Services.AddScoped<ICoverAssignmentRepository, CoverAssignmentRepository>();
 builder.Services.AddScoped<IShiftSwapRepository, ShiftSwapRepository>();
 builder.Services.AddScoped<IOvertimeRepository, OvertimeRepository>();
