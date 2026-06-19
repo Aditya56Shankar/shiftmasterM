@@ -93,7 +93,7 @@ namespace Services.Implementation
         {
             var today = DateTime.UtcNow.Date;
 
-            // ✅ If week not started
+            // ✅ If week not started 
             if (today < roster.WeekStartDate)
             {
                 roster.Status = RosterStatus.Draft;
