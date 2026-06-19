@@ -15,14 +15,18 @@ namespace shiftmaster.models
         [Required] public ShiftAssignmentStatus Status { get; set; }
 
         // Foreign Keys & Navigation
-        [Required] public int RosterID { get; set; }
+        [Required] 
+        public int? RosterID { get; set; }
+
+        [ForeignKey(nameof(RosterID))]
         public WeeklyRoster Roster { get; set; }
 
         [Required]
         [ForeignKey(nameof(Employee))] public int UserID { get; set; }
         public User Employee { get; set; }
 
-        [Required] public int ShiftPatternID { get; set; }
+        //[Required] 
+        public int? ShiftPatternID { get; set; }
         public ShiftPattern Pattern { get; set; }
 
         // 1-to-1 Relationship

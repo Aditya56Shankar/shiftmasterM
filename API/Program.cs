@@ -1,9 +1,14 @@
+using AutoMapper;
 using System;
 using System.Text;
 using System.Linq;
 using Data.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Services.Implementation;
+using Services.Interfaces;
+using Services.Mapper;
+using ShiftMaster.Application.Implementation;
 using Microsoft.IdentityModel.Tokens;
 using NSwag; // Added to enable full NSwag layout controls
 using NSwag.Generation.Processors.Security; // Enables security lock processors
@@ -12,6 +17,12 @@ using Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 // 1. Database Connection Configuration
 // Register DbContext with options as singleton to allow factory (singleton) to consume them
 builder.Services.AddDbContext<ApplicationDbContext>(
@@ -19,10 +30,37 @@ builder.Services.AddDbContext<ApplicationDbContext>(
     contextLifetime: ServiceLifetime.Transient,
     optionsLifetime: ServiceLifetime.Singleton);
 
+
+// ✅ Database
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Also register the factory for AuditService (creates fresh contexts)
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// ✅ Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// ✅ AutoMapper (Correct)
+
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+});
+
+builder.Services.AddScoped<ILeaveBlockRepository, LeaveBlockRepository>();
+builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>(); 
+builder.Services.AddScoped<IEmployeeSkillRepository, EmployeeSkillRepository>();
+builder.Services.AddScoped<IWeeklyRosterRepository, WeeklyRosterRepository>();
+builder.Services.AddScoped<IRosterValidationService, RosterValidationService>();
+builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
+
+
+// ✅ Controllers
+builder.Services.AddControllers();
+
+// ✅ OpenAPI
+builder.Services.AddOpenApi();
 // 2. Application Logic Services & Global JSON Configuration
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
@@ -90,6 +128,9 @@ var app = builder.Build();
 // 6. Request Middleware Pipeline Execution Map
 if (app.Environment.IsDevelopment())
 {
+    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
     app.UseOpenApi(); // Exposes the clean document schema file
     app.UseSwaggerUi(config =>
     {
@@ -97,6 +138,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseAuthorization();
 app.UseHttpsRedirection();
 
 app.UseAuthentication(); // 1. Read token claims to discover identity context and role values

@@ -4,8 +4,11 @@ using System.Text;
 
 namespace Domain.Enums
 {
-    public enum ShiftAssignmentStatus
+
+    public enum SkillStatus
     {
-        Cancelled,Assigned, Confirmed, Swapped, Covered
+        Active,
+        Expired
     }
+
 }
