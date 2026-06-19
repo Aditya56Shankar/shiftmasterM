@@ -40,6 +40,30 @@ namespace Services.Implementation
             };
         }
 
+        public async Task<DepartmentDto?> UpdateDepartmentAsync(int id, UpdateDepartmentDto dto)
+        {
+            var dept = await _context.Departments.FindAsync(id);
+            if (dept == null) return null;
+
+            dept.departmentName = dto.DepartmentName;
+            await _context.SaveChangesAsync();
+
+            return new DepartmentDto { DepartmentId = dept.departmentId, DepartmentName = dept.departmentName };
+        }
+
+        public async Task<bool> DeleteDepartmentAsync(int id)
+        {
+            var dept = await _context.Departments.FindAsync(id);
+            if (dept == null) return false;
+
+            var hasLinkedUsers = await _context.Users.AnyAsync(u => u.DepartmentID == id);
+            if (hasLinkedUsers) throw new InvalidOperationException("Cannot delete department with active employees allocated.");
+
+            _context.Departments.Remove(dept);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<DepartmentDto> CreateDepartmentAsync(CreateDepartmentDto newDepartment)
         {
             var department = new Department

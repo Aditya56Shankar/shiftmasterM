@@ -8,6 +8,8 @@ namespace Services.Interfaces
     {
         Task<IEnumerable<UserDto>> GetAllUsersAsync();
         Task<UserDto?> GetUserByIdAsync(int userId);
+        Task<UserDto?> UpdateUserAsync(int id, UpdateUserDto dto);
+        Task<bool> DeleteUserAsync(int id);
         Task<UserDto> CreateUserAsync(CreateUserDto newUser);
     }
 }

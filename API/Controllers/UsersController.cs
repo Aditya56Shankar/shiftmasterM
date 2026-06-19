@@ -39,5 +39,21 @@ namespace API.Controllers
             var createdUser = await _userService.CreateUserAsync(newUser);
             return CreatedAtAction(nameof(GetUserById), new { id = createdUser.UserID }, createdUser);
         }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<UserDto>> UpdateUser(int id, UpdateUserDto dto)
+        {
+            var updated = await _userService.UpdateUserAsync(id, dto);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var success = await _userService.DeleteUserAsync(id);
+            if (!success) return NotFound();
+            return NoContent();
+        }
     }
 }

@@ -8,6 +8,8 @@ namespace Services.Interfaces
     {
         Task<IEnumerable<DepartmentDto>> GetAllDepartmentsAsync();
         Task<DepartmentDto?> GetDepartmentByIdAsync(int departmentId);
+        Task<DepartmentDto?> UpdateDepartmentAsync(int id, UpdateDepartmentDto dto);
+        Task<bool> DeleteDepartmentAsync(int id);
         Task<DepartmentDto> CreateDepartmentAsync(CreateDepartmentDto newDepartment);
     }
 }
