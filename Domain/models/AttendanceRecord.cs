@@ -18,10 +18,12 @@ namespace shiftmaster.models
         [Required] public AttendanceStatus Status { get; set; }
 
         // Foreign Keys & Navigation
-        [Required] public int AssignmentID { get; set; }
+        //[Required] 
+        public int AssignmentID { get; set; }
         public ShiftAssignment Assignment { get; set; } =null!;
 
-        [Required] public int UserID { get; set; }
+        //[Required] 
+        public int UserID { get; set; }
         public User Employee { get; set; } = null!;
     }
 }

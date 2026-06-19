@@ -12,18 +12,53 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260609053101_InitialSetup")]
-    partial class InitialSetup
+    [Migration("20260612101553_Updated Audit Log")]
+    partial class UpdatedAuditLog
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("Domain.models.Department", b =>
+                {
+                    b.Property<int>("departmentId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("departmentId"));
+
+                    b.Property<string>("departmentName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("departmentId");
+
+                    b.ToTable("Departments");
+                });
+
+            modelBuilder.Entity("Domain.models.Role", b =>
+                {
+                    b.Property<int>("roleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("roleId"));
+
+                    b.Property<string>("roleName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("roleId");
+
+                    b.ToTable("Roles");
+                });
 
             modelBuilder.Entity("ShiftMaster.models.User", b =>
                 {
@@ -32,6 +67,9 @@ namespace Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserID"));
+
+                    b.Property<int>("DepartmentID")
+                        .HasColumnType("int");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -60,10 +98,8 @@ namespace Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("RoleID")
+                        .HasColumnType("int");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -72,7 +108,14 @@ namespace Data.Migrations
 
                     b.HasKey("UserID");
 
+                    b.HasIndex("DepartmentID");
+
+                    b.HasIndex("EmployeeID")
+                        .IsUnique();
+
                     b.HasIndex("LocationID");
+
+                    b.HasIndex("RoleID");
 
                     b.ToTable("Users");
                 });
@@ -137,23 +180,68 @@ namespace Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("AuthMethod")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ClientAppVersion")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("EntityType")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("RecordID")
+                    b.Property<string>("IPAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<bool>("IsSuccess")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("RecordID")
                         .HasColumnType("int");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserID")
+                    b.Property<string>("UserAgent")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<int?>("UserID")
                         .HasColumnType("int");
 
                     b.HasKey("AuditID");
 
-                    b.HasIndex("UserID");
+                    b.HasIndex("Timestamp")
+                        .HasDatabaseName("IX_AuditLogs_Timestamp");
+
+                    b.HasIndex("UserID")
+                        .HasDatabaseName("IX_AuditLogs_UserID");
+
+                    b.HasIndex("UserID", "Timestamp")
+                        .HasDatabaseName("IX_AuditLogs_UserID_Timestamp");
 
                     b.ToTable("AuditLogs");
                 });
@@ -337,16 +425,11 @@ namespace Data.Migrations
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UserID1")
-                        .HasColumnType("int");
-
                     b.HasKey("LeaveBlockID");
 
                     b.HasIndex("ApprovedByID");
 
                     b.HasIndex("UserID");
-
-                    b.HasIndex("UserID1");
 
                     b.ToTable("LeaveBlocks");
                 });
@@ -508,9 +591,6 @@ namespace Data.Migrations
                     b.Property<int>("UserID")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UserID1")
-                        .HasColumnType("int");
-
                     b.Property<int?>("WeeklyRosterRosterID")
                         .HasColumnType("int");
 
@@ -521,8 +601,6 @@ namespace Data.Migrations
                     b.HasIndex("ShiftPatternID");
 
                     b.HasIndex("UserID");
-
-                    b.HasIndex("UserID1");
 
                     b.HasIndex("WeeklyRosterRosterID");
 
@@ -585,6 +663,9 @@ namespace Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SkillReqID"));
 
+                    b.Property<int>("DepartmentID")
+                        .HasColumnType("int");
+
                     b.Property<int>("LocationID")
                         .HasColumnType("int");
 
@@ -602,6 +683,8 @@ namespace Data.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.HasKey("SkillReqID");
+
+                    b.HasIndex("DepartmentID");
 
                     b.HasIndex("LocationID");
 
@@ -710,6 +793,9 @@ namespace Data.Migrations
                     b.Property<int>("CreatedByID")
                         .HasColumnType("int");
 
+                    b.Property<int>("DepartmentID")
+                        .HasColumnType("int");
+
                     b.Property<int>("LocationID")
                         .HasColumnType("int");
 
@@ -730,6 +816,8 @@ namespace Data.Migrations
                     b.HasKey("RosterID");
 
                     b.HasIndex("CreatedByID");
+
+                    b.HasIndex("DepartmentID");
 
                     b.HasIndex("LocationID");
 
@@ -754,7 +842,7 @@ namespace Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("ManagerID")
+                    b.Property<int?>("ManagerID")
                         .HasColumnType("int");
 
                     b.Property<string>("OperatingHours")
@@ -781,13 +869,29 @@ namespace Data.Migrations
 
             modelBuilder.Entity("ShiftMaster.models.User", b =>
                 {
+                    b.HasOne("Domain.models.Department", "Department")
+                        .WithMany("Employees")
+                        .HasForeignKey("DepartmentID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("shiftmaster.models.WorkLocation", "HomeLocation")
                         .WithMany("Employees")
                         .HasForeignKey("LocationID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.models.Role", "Role")
+                        .WithMany("Users")
+                        .HasForeignKey("RoleID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+
                     b.Navigation("HomeLocation");
+
+                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("shiftmaster.models.AttendanceRecord", b =>
@@ -795,13 +899,13 @@ namespace Data.Migrations
                     b.HasOne("shiftmaster.models.ShiftAssignment", "Assignment")
                         .WithOne("Attendance")
                         .HasForeignKey("shiftmaster.models.AttendanceRecord", "AssignmentID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany()
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Assignment");
@@ -814,8 +918,7 @@ namespace Data.Migrations
                     b.HasOne("ShiftMaster.models.User", "Actor")
                         .WithMany()
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Actor");
                 });
@@ -825,7 +928,7 @@ namespace Data.Migrations
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany("Availabilities")
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Employee");
@@ -848,7 +951,7 @@ namespace Data.Migrations
                     b.HasOne("shiftmaster.models.ShiftAssignment", "OriginalAssignment")
                         .WithMany()
                         .HasForeignKey("OriginalAssignmentID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("AssignedBy");
@@ -863,7 +966,7 @@ namespace Data.Migrations
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany("Skills")
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Employee");
@@ -891,10 +994,6 @@ namespace Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ShiftMaster.models.User", null)
-                        .WithMany("LeaveBlocks")
-                        .HasForeignKey("UserID1");
-
                     b.Navigation("ApprovedBy");
 
                     b.Navigation("Employee");
@@ -905,7 +1004,7 @@ namespace Data.Migrations
                     b.HasOne("ShiftMaster.models.User", "Employee")
                         .WithMany("Notifications")
                         .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Employee");
@@ -964,7 +1063,7 @@ namespace Data.Migrations
                     b.HasOne("shiftmaster.models.ShiftPattern", "Pattern")
                         .WithMany("Assignments")
                         .HasForeignKey("ShiftPatternID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ShiftMaster.models.User", "Employee")
@@ -972,10 +1071,6 @@ namespace Data.Migrations
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("ShiftMaster.models.User", null)
-                        .WithMany("Shifts")
-                        .HasForeignKey("UserID1");
 
                     b.HasOne("shiftmaster.models.WeeklyRoster", null)
                         .WithMany("ShiftAssignments")
@@ -993,7 +1088,7 @@ namespace Data.Migrations
                     b.HasOne("shiftmaster.models.WorkLocation", "Location")
                         .WithMany("ShiftPatterns")
                         .HasForeignKey("LocationID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Location");
@@ -1001,11 +1096,19 @@ namespace Data.Migrations
 
             modelBuilder.Entity("shiftmaster.models.SkillRequirement", b =>
                 {
+                    b.HasOne("Domain.models.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentID")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("shiftmaster.models.WorkLocation", "Location")
                         .WithMany("SkillRequirements")
                         .HasForeignKey("LocationID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Department");
 
                     b.Navigation("Location");
                 });
@@ -1074,16 +1177,24 @@ namespace Data.Migrations
                     b.HasOne("ShiftMaster.models.User", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedByID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.models.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentID")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("shiftmaster.models.WorkLocation", "Location")
                         .WithMany("Rosters")
                         .HasForeignKey("LocationID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("CreatedBy");
+
+                    b.Navigation("Department");
 
                     b.Navigation("Location");
                 });
@@ -1093,21 +1204,26 @@ namespace Data.Migrations
                     b.HasOne("ShiftMaster.models.User", "Manager")
                         .WithMany()
                         .HasForeignKey("ManagerID")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Manager");
+                });
+
+            modelBuilder.Entity("Domain.models.Department", b =>
+                {
+                    b.Navigation("Employees");
+                });
+
+            modelBuilder.Entity("Domain.models.Role", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("ShiftMaster.models.User", b =>
                 {
                     b.Navigation("Availabilities");
 
-                    b.Navigation("LeaveBlocks");
-
                     b.Navigation("Notifications");
-
-                    b.Navigation("Shifts");
 
                     b.Navigation("Skills");
                 });
