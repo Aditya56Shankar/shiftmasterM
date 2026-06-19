@@ -30,8 +30,7 @@ namespace Services.Mapper
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
 
             CreateMap<CreateAssignmentDto, ShiftAssignment>()
-                .ForMember(dest => dest.AssignedDate, opt => opt.MapFrom(src => src.AssignedDate.Date))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => ShiftAssignmentStatus.Assigned));
+                .ForMember(dest => dest.AssignedDate, opt => opt.MapFrom(src => src.AssignedDate.Date));
 
             // ✅ Violations
             CreateMap<SchedulingConstraintViolation, ViolationViewDto>()
