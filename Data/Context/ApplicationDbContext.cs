@@ -219,7 +219,7 @@ namespace Data.Context
                 .HasForeignKey(u => u.DepartmentID)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Prevent Cascade Delete: Role & Users
+            // Prevent CascadeA Delete: Role & Users
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Role)
                 .WithMany(r => r.Users)
@@ -230,6 +230,12 @@ namespace Data.Context
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.EmployeeID)
                 .IsUnique();
+
+            modelBuilder.Entity<Role>()
+                .Property(r => r.roleName)
+                .HasConversion<string>()   // ❗ MUST ADD
+                .HasMaxLength(50);
+
 
 
             // ----------------------------------------------------------------------
@@ -293,12 +299,12 @@ namespace Data.Context
                 new Role
                 {
                     roleId = 1,
-                    roleName = "Admin"
+                    roleName = UserRole.SchedulingAdmin
                 },
                 new Role
                 {
                     roleId = 2,
-                    roleName = "Employee"
+                    roleName = UserRole.Employee
                 }
             );
 
@@ -385,6 +391,32 @@ namespace Data.Context
                     LocationID = 1,
                     RoleID = 2,
                     DepartmentID = 1
+                },
+                new User
+                {
+                    UserID = 4,
+                    EmployeeID = "EMP004",
+                    Name = "Employee four",
+                    Email = "emp1@shift.com",
+                    PasswordHash = "xyz",
+                    Phone = "999943546379",
+                    Status = UserStatus.Active,
+                    LocationID = 2,
+                    RoleID = 2,
+                    DepartmentID = 2
+                },
+                new User
+                {
+                    UserID = 5,
+                    EmployeeID = "EMP005",
+                    Name = "Employee five",
+                    Email = "emp1@shift.com",
+                    PasswordHash = "xyz",
+                    Phone = "99993672389",
+                    Status = UserStatus.Active,
+                    LocationID = 1,
+                    RoleID = 1,
+                    DepartmentID = 2
                 }
             );
 
@@ -458,7 +490,7 @@ namespace Data.Context
 
         Status = CoverStatus.Completed,  // ✅ enum (not string)
 
-        OriginalAssignmentID = 9,  // ✅ must exist in ShiftAssignments
+        OriginalAssignmentID = 1,  // ✅ must exist in ShiftAssignments
         CoveringUserID = 2,        // ✅ must exist in Users
         AssignedByID = 1           // ✅ must exist in Users
     }
@@ -525,7 +557,7 @@ namespace Data.Context
         OriginalAssignmentID = 1,
         ProposedAssignmentID = 2,
 
-       Reason = "Shift swapped and completed",
+        Reason = "Shift swapped and completed",
 
         ApprovedByID = 1,   // Admin user you already seeded
 
