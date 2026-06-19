@@ -139,7 +139,7 @@ namespace ShiftMaster.Controllers
                     Email = u.Email,
                     Phone = u.Phone,
                     LocationName = u.HomeLocation.LocationName,
-                    RoleName = u.Role.roleName,
+                    RoleName = u.Role.roleName.ToString(),
                     DepartmentName = u.Department.departmentName
                 })
                 .FirstOrDefaultAsync();

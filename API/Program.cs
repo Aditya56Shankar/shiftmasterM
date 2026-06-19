@@ -32,7 +32,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(
 
 
 // ✅ Database
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Also register the factory for AuditService (creates fresh contexts)
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

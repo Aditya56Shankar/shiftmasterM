@@ -72,7 +72,7 @@ namespace Services.Implementation
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()),
                     new Claim(ClaimTypes.Email, user.Email),
-                    new Claim("role", user.Role?.roleName ?? "User")
+                    new Claim("role", user.Role?.roleName.ToString() ?? "User")
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(15),
                 Issuer = _configuration["Jwt:Issuer"] ?? "ShiftMasterAPI",
