@@ -31,24 +31,27 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [HttpPost]
         public async Task<IActionResult> AssignShift([FromBody] CreateAssignmentDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var rosterExists = await _context.WeeklyRosters.AnyAsync(r => r.RosterID == dto.RosterID);
-            if (!rosterExists) return NotFound($"Parent Weekly Roster with ID {dto.RosterID} does not exist.");
+            if (!rosterExists) return NotFound();
 
-            // Use AutoMapper to convert your DTO into the raw Database Entity Model object
             var assignment = _mapper.Map<ShiftAssignment>(dto);
-
 
             _context.ShiftAssignments.Add(assignment);
             await _context.SaveChangesAsync();
 
-            // run compliance evaluations behind the scenes
             await _validationService.ValidateAssignmentConstraintsAsync(assignment.AssignmentID);
 
-            return Ok(assignment);
+            // ✅ RELOAD FROM DATABASE
+            var updatedAssignment = await _context.ShiftAssignments
+                .AsNoTracking()    // ✅ VERY IMPORTANT
+                .FirstOrDefaultAsync(a => a.AssignmentID == assignment.AssignmentID);
+
+            return Ok(updatedAssignment);
         }
     }
 }
