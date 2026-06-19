@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ namespace ShiftMaster.Controllers
 {
     [ApiController]
     [Route("api/users")]
-    [ProducesResponseType(200, Type = typeof(object))] //  Forces Swagger to stop requesting raw binary/octet-streams
+    [ProducesResponseType(200, Type = typeof(object))]
     public class UsersController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -25,24 +26,14 @@ namespace ShiftMaster.Controllers
             _auditService = auditService;
         }
 
-        // Helper method to get client IP address
-        private string GetClientIpAddress()
-        {
-            if (HttpContext.Request.Headers.TryGetValue("X-Forwarded-For", out var xForwardedFor))
-            {
-                var ips = xForwardedFor.ToString().Split(',');
-                return ips[0].Trim();
-            }
-            return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
-        }
+        private string GetClientIpAddress() =>
+            HttpContext.Request.Headers.TryGetValue("X-Forwarded-For", out var xForwardedFor)
+                ? xForwardedFor.ToString().Split(',')[0].Trim()
+                : HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
 
-        // Helper method to get user agent
-        private string GetUserAgent()
-        {
-            return HttpContext.Request.Headers["User-Agent"].ToString() ?? "Unknown";
-        }
+        private string GetUserAgent() =>
+            HttpContext.Request.Headers["User-Agent"].ToString() ?? "Unknown";
 
-        // Endpoint: POST /api/users/register
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -53,34 +44,23 @@ namespace ShiftMaster.Controllers
             {
                 var result = await _authService.RegisterAsync(dto);
 
-                // Log successful registration
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-                await _auditService.LogRegistrationAsync(
-                    userId: user?.UserID,
-                    isSuccess: true,
-                    ipAddress: ipAddress,
-                    userAgent: userAgent,
-                    source: "Web",
-                    details: "User registered successfully");
+                // Optimized: Only select the UserID instead of tracking the full entity
+                var userId = await _context.Users
+                    .Where(u => u.Email == dto.Email)
+                    .Select(u => (int?)u.UserID)
+                    .FirstOrDefaultAsync();
+
+                await _auditService.LogRegistrationAsync(userId, true, ipAddress, userAgent, "Web", "User registered successfully");
 
                 return Ok(new { message = result });
             }
             catch (Exception ex)
             {
-                // Log failed registration
-                await _auditService.LogRegistrationAsync(
-                    userId: null,
-                    isSuccess: false,
-                    ipAddress: ipAddress,
-                    userAgent: userAgent,
-                    source: "Web",
-                    details: ex.Message);
-
+                await _auditService.LogRegistrationAsync(null, false, ipAddress, userAgent, "Web", ex.Message);
                 return BadRequest(new { message = ex.Message });
             }
         }
 
-        // Endpoint: POST /api/users/login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
@@ -91,45 +71,29 @@ namespace ShiftMaster.Controllers
             {
                 var token = await _authService.LoginAsync(dto);
 
-                // Log successful login
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-                await _auditService.LogLoginAttemptAsync(
-                    userId: user?.UserID,
-                    isSuccess: true,
-                    ipAddress: ipAddress,
-                    userAgent: userAgent,
-                    authMethod: "Password",
-                    source: "Web",
-                    details: "Login successful");
+                // Optimized: Only select the UserID instead of tracking the full entity
+                var userId = await _context.Users
+                    .Where(u => u.Email == dto.Email)
+                    .Select(u => (int?)u.UserID)
+                    .FirstOrDefaultAsync();
+
+                await _auditService.LogLoginAttemptAsync(userId, true, ipAddress, userAgent, "Password", "Web", "Login successful");
 
                 return Ok(new { message = "Login successfully", token });
             }
             catch (Exception ex)
             {
-                // Log failed login
-                await _auditService.LogLoginAttemptAsync(
-                    userId: null,
-                    isSuccess: false,
-                    ipAddress: ipAddress,
-                    userAgent: userAgent,
-                    authMethod: "Password",
-                    source: "Web",
-                    details: ex.Message);
-
+                await _auditService.LogLoginAttemptAsync(null, false, ipAddress, userAgent, "Password", "Web", ex.Message);
                 return BadRequest(new { message = ex.Message });
             }
         }
 
-        // Endpoint: GET /api/users/{id}
-        [Authorize]
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetUserById(int id)
         {
             var adminUserDto = await _context.Users
-                .Include(u => u.Role)
-                .Include(u => u.Department)
-                .Include(u => u.HomeLocation)
+                .AsNoTracking() // Optimized: Faster read-only query
                 .Where(u => u.UserID == id)
                 .Select(u => new AdminUserDto
                 {

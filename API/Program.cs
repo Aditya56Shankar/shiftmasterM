@@ -37,6 +37,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// module 2 changes
+builder.Services.AddScoped<IWorkLocationService, WorkLocationService>();
+builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<ISkillRequirementService, SkillRequirementService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 // ✅ Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -144,6 +151,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication(); // 1. Read token claims to discover identity context and role values
 app.UseAuthorization();  // 2. Enforce Role-Based validation checks (Validates Admin policy bounds)
 
+app.UseAuthorization();
 app.MapControllers();
 
 var scope = app.Services.CreateScope();

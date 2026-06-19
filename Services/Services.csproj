@@ -1,16 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
   <ItemGroup>
 	  <PackageReference Include="AutoMapper" Version="16.1.1" />
 	  <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.2.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
       <PrivateAssets>all</PrivateAssets>
@@ -32,5 +33,11 @@
     <ProjectReference Include="..\Domain\Domain.csproj" />
     <ProjectReference Include="..\Data\Data.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Domain\Domain.csproj" />
+
+		<ProjectReference Include="..\Data\Data.csproj" />
+	</ItemGroup>
 
 </Project>

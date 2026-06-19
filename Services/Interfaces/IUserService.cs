@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Services.DTOs;
 
 namespace Services.Interfaces
 {
-    internal interface IUserService
+    public interface IUserService
     {
+        Task<IEnumerable<UserDto>> GetAllUsersAsync();
+        Task<UserDto?> GetUserByIdAsync(int userId);
+        Task<UserDto> CreateUserAsync(CreateUserDto newUser);
     }
 }
