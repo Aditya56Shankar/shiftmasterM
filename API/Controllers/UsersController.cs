@@ -1,11 +1,12 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Data.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Data.Context;
 using Services.DTOs;
+using Services.Implementation;
 using Services.Interfaces;
 
 namespace ShiftMaster.Controllers
@@ -18,12 +19,14 @@ namespace ShiftMaster.Controllers
         private readonly IAuthService _authService;
         private readonly ApplicationDbContext _context;
         private readonly IAuditService _auditService;
+        private readonly IUserService _userService;
 
-        public UsersController(IAuthService authService, ApplicationDbContext context, IAuditService auditService)
+        public UsersController(IAuthService authService, ApplicationDbContext context, IAuditService auditService, IUserService userService)
         {
             _authService = authService;
             _context = context;
             _auditService = auditService;
+            _userService = userService;
         }
 
         private string GetClientIpAddress() =>
