@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Interfaces;
@@ -20,6 +21,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
+       
         public async Task<IActionResult> CreateLeave([FromBody] LeaveBlockRequestDto leave)
         {
 

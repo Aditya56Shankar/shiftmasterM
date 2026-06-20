@@ -1,13 +1,14 @@
-﻿using Data.Context;
+﻿using System.Threading.Tasks;
+using AutoMapper; 
+using Data.Context;
 using Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Services.DTOs;
 using Services.Interfaces;
 using shiftmaster.models;
-using Microsoft.EntityFrameworkCore;
-using AutoMapper; 
-using System.Threading.Tasks;
 
 namespace API.Controllers
 {
@@ -31,7 +32,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [HttpPost]
+        [Authorize(Roles = "Supervisor")]
         public async Task<IActionResult> AssignShift([FromBody] CreateAssignmentDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

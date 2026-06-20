@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Data.Context;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Implementation;
@@ -22,6 +23,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Employee")]
         public async Task<IActionResult> Availablity([FromBody] AvailabilityRequestDto avail)
         {
             var res = mapper.Map<AvailabilitySubmission>(avail);
