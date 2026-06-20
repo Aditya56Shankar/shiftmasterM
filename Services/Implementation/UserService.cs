@@ -67,6 +67,33 @@ namespace Services.Implementation
             };
         }
 
+        public async Task<UserDto?> UpdateUserAsync(int id, UpdateUserDto dto)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return null;
+
+            user.Name = dto.Name;
+            user.Email = dto.Email;
+            user.Phone = dto.Phone;
+            user.Status = Enum.Parse<Domain.Enums.UserStatus>(dto.Status, true);
+            user.LocationID = dto.LocationID;
+            user.DepartmentID = dto.DepartmentID;
+            user.RoleID = dto.RoleID;
+
+            await _context.SaveChangesAsync();
+            return new UserDto { UserID = user.UserID, Name = user.Name, Email = user.Email };
+        }
+
+        public async Task<bool> DeleteUserAsync(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return false;
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<UserDto> CreateUserAsync(CreateUserDto newUser)
         {
             var user = new User

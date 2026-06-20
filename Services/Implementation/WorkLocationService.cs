@@ -73,6 +73,37 @@ namespace Services.Implementation
             return await GetLocationByIdAsync(location.LocationID);
         }
 
+        public async Task<WorkLocationDto?> UpdateLocationAsync(int id, UpdateWorkLocationDto dto)
+        {
+            var location = await _context.WorkLocations.FindAsync(id);
+            if (location == null) return null;
+
+            location.LocationName = dto.LocationName;
+            location.Type = Enum.Parse<LocationType>(dto.Type, true);
+            location.City = dto.City;
+            location.OperatingHours = dto.OperatingHours;
+            location.Status = Enum.Parse<ActiveStatus>(dto.Status, true);
+            location.ManagerID = dto.ManagerID;
+
+            await _context.SaveChangesAsync();
+
+            return new WorkLocationDto { LocationID = location.LocationID, LocationName = location.LocationName /* Map other properties as per your model */ };
+        }
+
+        public async Task<bool> DeleteLocationAsync(int id)
+        {
+            var location = await _context.WorkLocations.FindAsync(id);
+            if (location == null) return false;
+
+            // Protection Check: Avoid accidental user orphan cascade drops
+            var hasLinkedUsers = await _context.Users.AnyAsync(u => u.LocationID == id);
+            if (hasLinkedUsers) throw new InvalidOperationException("Cannot delete location because employees are currently assigned to it.");
+
+            _context.WorkLocations.Remove(location);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<bool> UpdateLocationStatusAsync(int locationId, string status)
         {
             var location = await _context.WorkLocations.FindAsync(locationId);

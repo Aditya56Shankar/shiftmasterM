@@ -39,5 +39,28 @@ namespace API.Controllers
             var createdRole = await _roleService.CreateRoleAsync(newRole);
             return CreatedAtAction(nameof(GetRoleById), new { id = createdRole.RoleId }, createdRole);
         }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<RoleDto>> UpdateRole(int id, UpdateRoleDto dto)
+        {
+            var updated = await _roleService.UpdateRoleAsync(id, dto);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteRole(int id)
+        {
+            try
+            {
+                var success = await _roleService.DeleteRoleAsync(id);
+                if (!success) return NotFound();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

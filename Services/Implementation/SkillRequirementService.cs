@@ -60,6 +60,31 @@ namespace Services.Implementation
             };
         }
 
+        public async Task<SkillRequirementDto?> UpdateRequirementAsync(int id, UpdateSkillRequirementDto dto)
+        {
+            var req = await _context.SkillRequirements.FindAsync(id);
+            if (req == null) return null;
+
+            req.SkillName = dto.SkillName;
+            req.MinCountPerShift = dto.MinCountPerShift;
+            req.Status = Enum.Parse<Domain.Enums.ActiveStatus>(dto.Status, true);
+            req.LocationID = dto.LocationID;
+            req.DepartmentID = dto.DepartmentID;
+
+            await _context.SaveChangesAsync();
+            return new SkillRequirementDto { SkillReqID = req.SkillReqID, SkillName = req.SkillName };
+        }
+
+        public async Task<bool> DeleteRequirementAsync(int id)
+        {
+            var req = await _context.SkillRequirements.FindAsync(id);
+            if (req == null) return false;
+
+            _context.SkillRequirements.Remove(req);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<SkillRequirementDto> CreateRequirementAsync(CreateSkillRequirementDto newReq)
         {
             var requirement = new SkillRequirement

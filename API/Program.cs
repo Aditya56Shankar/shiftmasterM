@@ -46,6 +46,7 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<ISkillRequirementService, SkillRequirementService>();
+builder.Services.AddScoped<IShiftPatternService, ShiftPatternService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 // ✅ Swagger
 builder.Services.AddEndpointsApiExplorer();

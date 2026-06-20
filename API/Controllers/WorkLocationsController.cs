@@ -52,5 +52,30 @@ namespace API.Controllers
             // Returns an HTTP 201 Created status and points to the newly created resource
             return CreatedAtAction(nameof(GetById), new { id = createdLocation.LocationID }, createdLocation);
         }
+
+        // PUT: api/worklocations/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateWorkLocationDto dto)
+        {
+            var updated = await _locationService.UpdateLocationAsync(id, dto);
+            if (updated == null) return NotFound($"Work location with ID {id} not found.");
+            return Ok(updated);
+        }
+
+        // DELETE: api/worklocations/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var success = await _locationService.DeleteLocationAsync(id);
+                if (!success) return NotFound($"Work location with ID {id} not found.");
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

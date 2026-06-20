@@ -39,5 +39,28 @@ namespace API.Controllers
             var createdDepartment = await _departmentService.CreateDepartmentAsync(newDepartment);
             return CreatedAtAction(nameof(GetDepartmentById), new { id = createdDepartment.DepartmentId }, createdDepartment);
         }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<DepartmentDto>> UpdateDepartment(int id, UpdateDepartmentDto dto)
+        {
+            var updated = await _departmentService.UpdateDepartmentAsync(id, dto);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteDepartment(int id)
+        {
+            try
+            {
+                var success = await _departmentService.DeleteDepartmentAsync(id);
+                if (!success) return NotFound();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

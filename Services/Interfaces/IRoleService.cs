@@ -8,6 +8,8 @@ namespace Services.Interfaces
     {
         Task<IEnumerable<RoleDto>> GetAllRolesAsync();
         Task<RoleDto?> GetRoleByIdAsync(int roleId);
+        Task<RoleDto?> UpdateRoleAsync(int id, UpdateRoleDto dto);
+        Task<bool> DeleteRoleAsync(int id);
         Task<RoleDto> CreateRoleAsync(CreateRoleDto newRole);
     }
 }
