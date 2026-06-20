@@ -17,7 +17,7 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<ISkillRequirementService, SkillRequirementService>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IShiftPatternService, ShiftPatternService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
