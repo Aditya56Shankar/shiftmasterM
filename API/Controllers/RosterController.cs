@@ -42,8 +42,8 @@ namespace API.Controllers
 
         //HLD Endpoint: GET /api/rosters/{locationId}/{week} (Action: Get roster)//Note: '{week}' represents the week start date string (e.g., "2026-06-15")
         [HttpGet]
-        [Authorize(Roles = "Supervisor")]
         [Route("{locationId:int}/{week}")]
+        [Authorize(Roles = "Supervisor,Admin")]
         public async Task<IActionResult> GetRoster(int locationId, string week)
         {
 
@@ -76,7 +76,7 @@ namespace API.Controllers
                 return BadRequest("Roster already approved");
 
             // ✅ Get User ID from token
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst("nameid")?.Value;
 
             if (string.IsNullOrEmpty(userIdClaim))
                 return Unauthorized("User ID not found in token");

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Interfaces;
@@ -19,6 +20,7 @@ public class AttendanceController : ControllerBase
 
     // ✅ POST: /api/attendance
     [HttpPost]
+    [Authorize(Roles = "Employee")]
     public async Task<IActionResult> RecordAttendance([FromBody] CreateAttendanceDto dto)
     {
         // ✅ Map DTO → Entity
