@@ -24,7 +24,7 @@ namespace Services.Implementation
                 .Select(r => new RoleDto
                 {
                     RoleId = r.roleId,
-                    RoleName = r.roleName
+                    RoleName = r.roleName.ToString()
                 }).ToListAsync();
         }
 
@@ -36,7 +36,7 @@ namespace Services.Implementation
             return new RoleDto
             {
                 RoleId = r.roleId,
-                RoleName = r.roleName
+                RoleName = r.roleName.ToString()
             };
         }
 
@@ -77,7 +77,7 @@ namespace Services.Implementation
             return new RoleDto
             {
                 RoleId = role.roleId,
-                RoleName = role.roleName
+                RoleName = role.roleName.ToString()
             };
         }
     }

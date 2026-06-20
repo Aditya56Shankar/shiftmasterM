@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using Domain.Enums;
 using ShiftMaster.models;
 
 namespace Domain.models
