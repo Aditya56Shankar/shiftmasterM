@@ -10,7 +10,6 @@ using shiftmaster.models;
 using ShiftMaster.models;
 using System;
 using System.Collections.Generic;
-using System.Reflection.Emit;
 using System.Text;
 
 namespace Data.Context
@@ -279,7 +278,7 @@ namespace Data.Context
                 fk.DeleteBehavior = DeleteBehavior.Restrict;
             }
 
-
+/*
             modelBuilder.Entity<WorkLocation>().HasData(
 
                  new WorkLocation
@@ -327,12 +326,12 @@ namespace Data.Context
                 new Role
                 {
                     roleId = 1,
-                    roleName = UserRole.SchedulingAdmin
+                    roleName = "SchedulingAdmin"
                 },
                 new Role
                 {
                     roleId = 2,
-                    roleName = UserRole.Employee
+                    roleName = "Employee"
                 }
             );
 
@@ -593,7 +592,7 @@ namespace Data.Context
     }
 );
 
-
+*/
         }
     }
 }

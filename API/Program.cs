@@ -5,6 +5,10 @@ using System.Linq;
 using Data.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Services.Interfaces;
+using Services.Interfaces.Repositories;
+using Services.Implementation;
+using Services.Implementation.Repositories;
 using Services.Implementation;
 using Services.Interfaces;
 using Services.Mapper;
@@ -36,6 +40,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// module 2 changes
+builder.Services.AddScoped<IWorkLocationService, WorkLocationService>();
+builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<ISkillRequirementService, SkillRequirementService>();
+builder.Services.AddScoped<IShiftPatternService, ShiftPatternService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 // ✅ Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -56,6 +68,18 @@ builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 
 
 // ✅ Controllers
+builder.Services.AddAutoMapper(cfg => { }, typeof(CoverAssignmentService).Assembly);
+
+//Repository Dependency Injection
+builder.Services.AddScoped<ICoverAssignmentRepository, CoverAssignmentRepository>();
+builder.Services.AddScoped<IShiftSwapRepository, ShiftSwapRepository>();
+builder.Services.AddScoped<IOvertimeRepository, OvertimeRepository>();
+
+// Module 2.6 — Workflow Engine Services
+builder.Services.AddScoped<ICoverAssignmentService, CoverAssignmentService>();
+builder.Services.AddScoped<IShiftSwapService, ShiftSwapService>();
+builder.Services.AddScoped<IOvertimeService, OvertimeService>();
+
 builder.Services.AddControllers();
 
 // ✅ OpenAPI
@@ -143,6 +167,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication(); // 1. Read token claims to discover identity context and role values
 app.UseAuthorization();  // 2. Enforce Role-Based validation checks (Validates Admin policy bounds)
 
+app.UseAuthorization();
 app.MapControllers();
 
 var scope = app.Services.CreateScope();
