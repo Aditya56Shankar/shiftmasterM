@@ -4,12 +4,11 @@ using System.Text;
 using AutoMapper;
 using Data.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.OpenApi; // Native OpenAPI namespace
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using NSwag;
-     // Native OpenApi Object models
 using Services.Implementation;
 using Services.Implementation.Repositories;
 using Services.Interfaces;
@@ -20,15 +19,24 @@ using NSwag.Generation.Processors.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// =========================================================================
+// 1. DATABASE CONNECTION CONFIGURATION
+// =========================================================================
 
 builder.Services.AddDbContext<ApplicationDbContext>(
     (sp, options) => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")),
     contextLifetime: ServiceLifetime.Transient,
-    optionsLifetime: ServiceLifetime.Singleton);
+    optionsLifetime: ServiceLifetime.Singleton
+);
 
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
 
+
+// =========================================================================
+// 2. DOMAIN LOGIC SERVICES
+// =========================================================================
 
 builder.Services.AddScoped<IWorkLocationService, WorkLocationService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
@@ -40,23 +48,35 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 
-// Workflow Engine Services
+
+// =========================================================================
+// 3. WORKFLOW ENGINE SERVICES
+// =========================================================================
+
 builder.Services.AddScoped<ICoverAssignmentService, CoverAssignmentService>();
 builder.Services.AddScoped<IShiftSwapService, ShiftSwapService>();
 builder.Services.AddScoped<IOvertimeService, OvertimeService>();
+builder.Services.AddScoped<IRosterValidationService, RosterValidationService>();
 
-// Repository Dependency Injection
+
+// =========================================================================
+// 4. REPOSITORY DEPENDENCY INJECTION
+// =========================================================================
+
 builder.Services.AddScoped<ILeaveBlockRepository, LeaveBlockRepository>();
 builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
 builder.Services.AddScoped<IEmployeeSkillRepository, EmployeeSkillRepository>();
 builder.Services.AddScoped<IWeeklyRosterRepository, WeeklyRosterRepository>();
-builder.Services.AddScoped<IRosterValidationService, RosterValidationService>();
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<ICoverAssignmentRepository, CoverAssignmentRepository>();
 builder.Services.AddScoped<IShiftSwapRepository, ShiftSwapRepository>();
 builder.Services.AddScoped<IOvertimeRepository, OvertimeRepository>();
 
-// Controllers & JSON Setup (Consolidated into single declaration)
+
+// =========================================================================
+// 5. CONTROLLERS, JSON, & AUTOMAPPER CONFIGURATION
+// =========================================================================
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -65,14 +85,18 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-// AutoMapper (Consolidated)
 builder.Services.AddAutoMapper(cfg =>
 {
     cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
 });
 
 
+// =========================================================================
+// 6. JWT AUTHENTICATION & AUTHORIZATION CONFIGURATION
+// =========================================================================
+
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKeyThatIsAtLeast32BytesLong!!";
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -90,14 +114,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireAdminOnly", policy => policy.RequireRole("Admin"));
 });
 
 
-// Removed the conflicting builder.Services.AddOpenApi() wrapper
+// =========================================================================
+// 7. OPENAPI / NSWAG DOCUMENTATION CONFIGURATION
+// =========================================================================
+
 builder.Services.AddOpenApiDocument(document =>
 {
     document.Title = "ShiftMaster API";
@@ -109,12 +135,17 @@ builder.Services.AddOpenApiDocument(document =>
         Type = NSwag.OpenApiSecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT",
-        Description = "Paste your raw token string below directly. (Do NOT type the word 'Bearer')."
+        Description = "Enter: Bearer {your JWT token}"
     });
 
     // This processor reads your [Authorize] attributes to lock down the endpoints
     document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("Bearer"));
 });
+
+
+// =========================================================================
+// 8. HTTP REQUEST PIPELINE (MIDDLEWARE)
+// =========================================================================
 
 var app = builder.Build();
 
@@ -133,7 +164,11 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Database initialization block
+
+// =========================================================================
+// 9. DATABASE INITIALIZATION
+// =========================================================================
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

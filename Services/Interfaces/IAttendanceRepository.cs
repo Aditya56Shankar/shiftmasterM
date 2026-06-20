@@ -13,7 +13,7 @@ namespace Services.Interfaces
         Task<TimesheetSummary> CreateTimesheetAsync(int userId, DateTime weekStart);
         Task<TimesheetSummary?> UpdateTimesheetStatusAsync(
         int timesheetId,
-        TimesheetStatus newStatus);
+        TimesheetStatus newStatus, int userId);
 
 
     }

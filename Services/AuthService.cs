@@ -74,7 +74,7 @@ namespace Services.Implementation
                     new Claim(ClaimTypes.Email, user.Email),
                     new Claim("role", user.Role?.roleName.ToString() ?? "User")
                 }),
-                Expires = DateTime.UtcNow.AddMinutes(15),
+                Expires = DateTime.UtcNow.AddHours(2),
                 Issuer = _configuration["Jwt:Issuer"] ?? "ShiftMasterAPI",
                 Audience = _configuration["Jwt:Audience"] ?? "ShiftMasterUsers",
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)

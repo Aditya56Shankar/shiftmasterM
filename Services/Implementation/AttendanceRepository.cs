@@ -135,7 +135,8 @@ public class AttendanceRepository : IAttendanceRepository
     //  UPDATE STATUS
     public async Task<TimesheetSummary?> UpdateTimesheetStatusAsync(
     int timesheetId,
-    TimesheetStatus newStatus)
+    TimesheetStatus newStatus,
+    int userId)
     {
         var timesheet = await _context.TimesheetSummaries
             .FirstOrDefaultAsync(x => x.TimesheetID == timesheetId);
@@ -143,30 +144,44 @@ public class AttendanceRepository : IAttendanceRepository
         if (timesheet == null)
             return null;
 
-        // ✅ Lock after payroll
-        if (timesheet.Status == TimesheetStatus.SentToPayroll)
-            throw new InvalidOperationException("Timesheet already processed");
+        // ✅ Prevent updating if already final
+        if (timesheet.Status == TimesheetStatus.Approved)
+            throw new InvalidOperationException("Timesheet already approved and locked");
 
-        // ✅ Only validate status flow (NOT roles)
-        if (newStatus == TimesheetStatus.Approved)
+        // ✅ Prevent duplicate updates
+        if (timesheet.Status == newStatus)
+            throw new InvalidOperationException($"Timesheet already in '{newStatus}' state");
+
+        // ✅ Workflow validation
+        switch (newStatus)
         {
-            if (timesheet.Status != TimesheetStatus.Submitted)
-                throw new InvalidOperationException("Timesheet must be Submitted first");
-        }
-        else if (newStatus == TimesheetStatus.SentToPayroll)
-        {
-            if (timesheet.Status != TimesheetStatus.Approved)
-                throw new InvalidOperationException("Timesheet must be Approved first");
-        }
-        else
-        {
-            throw new InvalidOperationException("Invalid status update");
+            case TimesheetStatus.SentToPayroll:
+                if (timesheet.Status != TimesheetStatus.Submitted)
+                    throw new InvalidOperationException(
+                        $"Cannot move to SentToPayroll from {timesheet.Status}");
+
+                // ✅ Track Supervisor who sent it
+                timesheet.ApprovedByID = userId;
+                break;
+
+            case TimesheetStatus.Approved:
+                if (timesheet.Status != TimesheetStatus.SentToPayroll)
+                    throw new InvalidOperationException(
+                        $"Cannot approve from {timesheet.Status}");
+
+                // ✅ Track Payroll approver
+                timesheet.ApprovedByID = userId;
+                break;
+
+            default:
+                throw new InvalidOperationException("Invalid status transition");
         }
 
+        // ✅ Update status
         timesheet.Status = newStatus;
 
         await _context.SaveChangesAsync();
+
         return timesheet;
     }
-    
 }

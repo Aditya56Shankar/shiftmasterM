@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using AutoMapper; 
+using AutoMapper;
 using Data.Context;
 using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +14,7 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize(Roles = "Supervisor")]
     public class ShiftAssignmentController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -33,6 +34,8 @@ namespace API.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Supervisor")]
+
+
         public async Task<IActionResult> AssignShift([FromBody] CreateAssignmentDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);

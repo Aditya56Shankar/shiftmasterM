@@ -17,7 +17,6 @@ public class TimesheetController : ControllerBase
         _repo = repo;
         _mapper = mapper;
     }
-
     // ✅ POST: /api/timesheets
     [HttpPost]
     public async Task<IActionResult> SubmitTimesheet([FromBody] CreateTimesheetDto dto)
@@ -31,40 +30,47 @@ public class TimesheetController : ControllerBase
         return Ok(response);
     }
 
-    //  PUT → Approve (Supervisor)
 
-    [Authorize(Roles = "ShiftSupervisor")]
+    [Authorize(Roles = "Supervisor")]
+    [HttpPut("{id}/Supervisor")]
+    public async Task<IActionResult> SendToPayroll(int id)
+    {
+        var userId = int.Parse(User.FindFirst("nameid")?.Value);
+
+        var result = await _repo.UpdateTimesheetStatusAsync(
+            id,
+            TimesheetStatus.SentToPayroll,
+            userId
+        );
+
+        if (result == null)
+            return NotFound();
+
+        return Ok(result);
+    }
+
+
+    //  PUT → Approve (Supervisor)
+    [Authorize(Roles = "Payroll")]
     [HttpPut("{id}/approve")]
     public async Task<IActionResult> ApproveTimesheet(int id)
     {
+        var userId = int.Parse(User.FindFirst("nameid")?.Value);
+
         var result = await _repo.UpdateTimesheetStatusAsync(
             id,
-            TimesheetStatus.Approved
-            );
+            TimesheetStatus.Approved,
+            userId
+        );
 
         if (result == null)
             return NotFound();
 
-        var response = _mapper.Map<TimesheetDtoResponse>(result);
-        return Ok(response);
+        return Ok(result);
     }
 
 
-    [Authorize(Roles = "PayrollExecutive")]
-    [HttpPut("{id}/payroll")]
-    public async Task<IActionResult> SendToPayroll(int id)
-    {
-        var result = await _repo.UpdateTimesheetStatusAsync(
-            id,
-            TimesheetStatus.SentToPayroll
-            );
 
-        if (result == null)
-            return NotFound();
-
-        var response = _mapper.Map<TimesheetDtoResponse>(result);
-        return Ok(response);
-    }
 
 
 }
