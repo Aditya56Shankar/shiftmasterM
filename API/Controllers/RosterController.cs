@@ -63,34 +63,49 @@ namespace API.Controllers
 
         }
 
-        [Authorize(Roles = "Admin")]
-        [HttpPut("{id}/approve")]
-        public async Task<IActionResult> ApproveRoster(int id)
+        [Authorize(Roles = "Supervisor")]
+        [HttpPut("{id}/update-status")]
+        public async Task<IActionResult> UpdateRosterStatus(int id, [FromQuery] string action)
         {
             var roster = await db.WeeklyRosters.FindAsync(id);
 
             if (roster == null)
                 return NotFound("Roster not found");
 
-            if (roster.ApprovedByUserID != null)
-                return BadRequest("Roster already approved");
-
-            // ✅ Get User ID from token
             var userIdClaim = User.FindFirst("nameid")?.Value;
 
             if (string.IsNullOrEmpty(userIdClaim))
                 return Unauthorized("User ID not found in token");
 
-            roster.ApprovedByUserID = int.Parse(userIdClaim);
+            int adminId = int.Parse(userIdClaim);
+
+            action = action?.ToLower();
+
+            if (action == "publish")
+            {
+                roster.Status = RosterStatus.Published;
+            }
+            else if (action == "amend")
+            {
+                roster.Status = RosterStatus.Amended;
+            }
+            else
+            {
+                return BadRequest("Invalid action. Use 'publish' or 'amend'");
+            }
+
+            roster.ApprovedByUserID = adminId;
 
             await db.SaveChangesAsync();
 
             return Ok(new
             {
-                message = "Roster approved by Scheduling Admin",
-                ApprovedBy = roster.ApprovedByUserID,
+                message = $"Roster {roster.Status} successfully",
+                Status = roster.Status,
+                UpdatedBy = adminId
             });
         }
+
 
     }
 }
