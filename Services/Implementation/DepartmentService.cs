@@ -1,67 +1,33 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Data.Context;
 using Domain.models;
-using Microsoft.EntityFrameworkCore;
 using Services.DTOs;
 using Services.Interfaces;
+using Services.Interfaces.Repositories;
 
 namespace Services.Implementation
 {
     public class DepartmentService : IDepartmentService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IDepartmentRepository _repo;
 
-        public DepartmentService(ApplicationDbContext context)
+        public DepartmentService(IDepartmentRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
         public async Task<IEnumerable<DepartmentDto>> GetAllDepartmentsAsync()
         {
-            return await _context.Departments
-                .Select(d => new DepartmentDto
-                {
-                    DepartmentId = d.departmentId,
-                    DepartmentName = d.departmentName
-                }).ToListAsync();
+            var depts = await _repo.GetAllAsync();
+            return depts.Select(d => MapToDto(d));
         }
 
         public async Task<DepartmentDto?> GetDepartmentByIdAsync(int departmentId)
         {
-            var d = await _context.Departments.FindAsync(departmentId);
-            if (d == null) return null;
-
-            return new DepartmentDto
-            {
-                DepartmentId = d.departmentId,
-                DepartmentName = d.departmentName
-            };
-        }
-
-        public async Task<DepartmentDto?> UpdateDepartmentAsync(int id, UpdateDepartmentDto dto)
-        {
-            var dept = await _context.Departments.FindAsync(id);
-            if (dept == null) return null;
-
-            dept.departmentName = dto.DepartmentName;
-            await _context.SaveChangesAsync();
-
-            return new DepartmentDto { DepartmentId = dept.departmentId, DepartmentName = dept.departmentName };
-        }
-
-        public async Task<bool> DeleteDepartmentAsync(int id)
-        {
-            var dept = await _context.Departments.FindAsync(id);
-            if (dept == null) return false;
-
-            var hasLinkedUsers = await _context.Users.AnyAsync(u => u.DepartmentID == id);
-            if (hasLinkedUsers) throw new InvalidOperationException("Cannot delete department with active employees allocated.");
-
-            _context.Departments.Remove(dept);
-            await _context.SaveChangesAsync();
-            return true;
+            var d = await _repo.GetByIdAsync(departmentId);
+            return d == null ? null : MapToDto(d);
         }
 
         public async Task<DepartmentDto> CreateDepartmentAsync(CreateDepartmentDto newDepartment)
@@ -71,14 +37,40 @@ namespace Services.Implementation
                 departmentName = newDepartment.DepartmentName
             };
 
-            _context.Departments.Add(department);
-            await _context.SaveChangesAsync();
+            await _repo.AddAsync(department);
+            await _repo.SaveChangesAsync();
 
-            return new DepartmentDto
-            {
-                DepartmentId = department.departmentId,
-                DepartmentName = department.departmentName
-            };
+            return MapToDto(department);
         }
+
+        public async Task<DepartmentDto?> UpdateDepartmentAsync(int id, UpdateDepartmentDto dto)
+        {
+            var dept = await _repo.GetByIdAsync(id);
+            if (dept == null) return null;
+
+            dept.departmentName = dto.DepartmentName;
+            await _repo.SaveChangesAsync();
+
+            return MapToDto(dept);
+        }
+
+        public async Task<bool> DeleteDepartmentAsync(int id)
+        {
+            var dept = await _repo.GetByIdAsync(id);
+            if (dept == null) return false;
+
+            if (await _repo.HasLinkedUsersAsync(id))
+                throw new InvalidOperationException("Cannot delete department with active employees allocated.");
+
+            _repo.Remove(dept);
+            await _repo.SaveChangesAsync();
+            return true;
+        }
+
+        private static DepartmentDto MapToDto(Department d) => new()
+        {
+            DepartmentId = d.departmentId,
+            DepartmentName = d.departmentName
+        };
     }
 }

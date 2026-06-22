@@ -8,6 +8,6 @@ namespace Services.DTOs
     public class CreateDepartmentDto
     {
         [Required]
-        public string DepartmentName { get; set; } = string.Empty;
+        public string DepartmentName { get; set; }
     }
 }

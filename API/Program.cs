@@ -22,7 +22,6 @@ var builder = WebApplication.CreateBuilder(args);
 // =========================================================================
 // 1. DATABASE CONNECTION CONFIGURATION
 // =========================================================================
-
 builder.Services.AddDbContext<ApplicationDbContext>(
     (sp, options) => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")),
     contextLifetime: ServiceLifetime.Transient,
@@ -33,11 +32,9 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-
 // =========================================================================
 // 2. DOMAIN LOGIC SERVICES
 // =========================================================================
-
 builder.Services.AddScoped<IWorkLocationService, WorkLocationService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -48,21 +45,17 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 
-
 // =========================================================================
 // 3. WORKFLOW ENGINE SERVICES
 // =========================================================================
-
 builder.Services.AddScoped<ICoverAssignmentService, CoverAssignmentService>();
 builder.Services.AddScoped<IShiftSwapService, ShiftSwapService>();
 builder.Services.AddScoped<IOvertimeService, OvertimeService>();
 builder.Services.AddScoped<IRosterValidationService, RosterValidationService>();
 
-
 // =========================================================================
 // 4. REPOSITORY DEPENDENCY INJECTION
 // =========================================================================
-
 builder.Services.AddScoped<ILeaveBlockRepository, LeaveBlockRepository>();
 builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
 builder.Services.AddScoped<IEmployeeSkillRepository, EmployeeSkillRepository>();
@@ -72,11 +65,16 @@ builder.Services.AddScoped<ICoverAssignmentRepository, CoverAssignmentRepository
 builder.Services.AddScoped<IShiftSwapRepository, ShiftSwapRepository>();
 builder.Services.AddScoped<IOvertimeRepository, OvertimeRepository>();
 
+// New repositories added below
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<ISkillRequirementRepository, SkillRequirementRepository>();
+builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+builder.Services.AddScoped<IShiftPatternRepository, ShiftPatternRepository>();
 
 // =========================================================================
 // 5. CONTROLLERS, JSON, & AUTOMAPPER CONFIGURATION
 // =========================================================================
-
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -90,13 +88,10 @@ builder.Services.AddAutoMapper(cfg =>
     cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
 });
 
-
 // =========================================================================
 // 6. JWT AUTHENTICATION & AUTHORIZATION CONFIGURATION
 // =========================================================================
-
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "SuperSecretKeyThatIsAtLeast32BytesLong!!";
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -119,17 +114,14 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("RequireAdminOnly", policy => policy.RequireRole("Admin"));
 });
 
-
 // =========================================================================
 // 7. OPENAPI / NSWAG DOCUMENTATION CONFIGURATION
 // =========================================================================
-
 builder.Services.AddOpenApiDocument(document =>
 {
     document.Title = "ShiftMaster API";
     document.Version = "v1";
 
-    // Explicitly declaring 'NSwag.' prevents the ambiguous reference error
     document.AddSecurity("Bearer", Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme
     {
         Type = NSwag.OpenApiSecuritySchemeType.Http,
@@ -138,37 +130,30 @@ builder.Services.AddOpenApiDocument(document =>
         Description = "Enter: Bearer {your JWT token}"
     });
 
-    // This processor reads your [Authorize] attributes to lock down the endpoints
     document.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("Bearer"));
 });
-
 
 // =========================================================================
 // 8. HTTP REQUEST PIPELINE (MIDDLEWARE)
 // =========================================================================
-
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    // Use NSwag middleware to serve the JSON and the UI (which contains the auth button)
     app.UseOpenApi();
     app.UseSwaggerUi();
 }
 
 app.UseHttpsRedirection();
 
-// Strict Execution Order: Auth MUST execute before mapping controllers
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-
 // =========================================================================
 // 9. DATABASE INITIALIZATION
 // =========================================================================
-
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

@@ -8,9 +8,9 @@ namespace Services.DTOs
         public int UserID { get; set; }
 
         [Required, MaxLength(500)]
-        public string Message { get; set; } = string.Empty;
+        public string Message { get; set; }
 
         [Required]
-        public string Category { get; set; } = "Roster"; // E.g., Roster, Shift, Swap, Cover [cite: 228]
+        public string Category { get; set; }  // E.g., Roster, Shift, Swap, Cover [cite: 228]
     }
 }

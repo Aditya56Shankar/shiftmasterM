@@ -7,55 +7,32 @@ using Domain.Enums; // Adjust namespace to match your project
 using Microsoft.EntityFrameworkCore;
 using Services.DTOs;
 using Services.Interfaces;
+using Services.Interfaces.Repositories;
 using shiftmaster.models; // Adjust to match your ShiftPattern domain model namespace
+using AutoMapper;
 
 namespace Services.Implementation
 {
     public class ShiftPatternService : IShiftPatternService
     {
-        private readonly ApplicationDbContext _context;
-
-        public ShiftPatternService(ApplicationDbContext context)
+        private readonly IShiftPatternRepository _repo;
+        private readonly IMapper _mapper;
+        public ShiftPatternService(IShiftPatternRepository repo, IMapper mapper)
         {
-            _context = context;
+            _repo = repo;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<ShiftPatternDto>> GetAllPatternsAsync()
         {
-            return await _context.ShiftPatterns
-                .Select(p => new ShiftPatternDto
-                {
-                    PatternID = p.PatternID,
-                    PatternName = p.PatternName,
-                    StartTime = p.StartTime,
-                    EndTime = p.EndTime,
-                    DurationHours = p.DurationHours,
-                    BreakMinutes = p.BreakMinutes,
-                    ShiftType = p.ShiftType.ToString(),
-                    MinStaffingLevel = p.MinStaffingLevel,
-                    Status = p.Status.ToString(),
-                    LocationID = p.LocationID
-                }).ToListAsync();
+            var patterns = await _repo.GetAllAsync();
+            return _mapper.Map<IEnumerable<ShiftPatternDto>>(patterns);
         }
 
         public async Task<ShiftPatternDto?> GetPatternByIdAsync(int id)
         {
-            var p = await _context.ShiftPatterns.FindAsync(id);
-            if (p == null) return null;
-
-            return new ShiftPatternDto
-            {
-                PatternID = p.PatternID,
-                PatternName = p.PatternName,
-                StartTime = p.StartTime,
-                EndTime = p.EndTime,
-                DurationHours = p.DurationHours,
-                BreakMinutes = p.BreakMinutes,
-                ShiftType = p.ShiftType.ToString(),
-                MinStaffingLevel = p.MinStaffingLevel,
-                Status = p.Status.ToString(),
-                LocationID = p.LocationID
-            };
+            var p = await _repo.GetByIdAsync(id);
+            return p == null ? null : MapToDto(p);
         }
 
         public async Task<ShiftPatternDto> CreatePatternAsync(CreateShiftPatternDto newPattern)
@@ -73,15 +50,15 @@ namespace Services.Implementation
                 LocationID = newPattern.LocationID
             };
 
-            _context.ShiftPatterns.Add(pattern);
-            await _context.SaveChangesAsync();
+            await _repo.AddAsync(pattern);
+            await _repo.SaveChangesAsync();
 
-            return await GetPatternByIdAsync(pattern.PatternID) ?? new ShiftPatternDto();
+            return MapToDto(pattern);
         }
 
         public async Task<ShiftPatternDto?> UpdatePatternAsync(int id, CreateShiftPatternDto updatePattern)
         {
-            var pattern = await _context.ShiftPatterns.FindAsync(id);
+            var pattern = await _repo.GetByIdAsync(id);
             if (pattern == null) return null;
 
             pattern.PatternName = updatePattern.PatternName;
@@ -94,22 +71,35 @@ namespace Services.Implementation
             pattern.Status = Enum.Parse<ActiveStatus>(updatePattern.Status, true);
             pattern.LocationID = updatePattern.LocationID;
 
-            await _context.SaveChangesAsync();
-            return await GetPatternByIdAsync(id);
+            await _repo.SaveChangesAsync();
+            return MapToDto(pattern);
         }
 
         public async Task<bool> DeletePatternAsync(int id)
         {
-            var pattern = await _context.ShiftPatterns.FindAsync(id);
+            var pattern = await _repo.GetByIdAsync(id);
             if (pattern == null) return false;
 
-            // Protection Check: Ensure we don't sever historical roster mappings
-            var isLinked = await _context.ShiftAssignments.AnyAsync(sa => sa.ShiftPatternID == id);
-            if (isLinked) throw new InvalidOperationException("Cannot delete this template because active shift allocations are scheduled against it.");
+            if (await _repo.HasLinkedAssignmentsAsync(id))
+                throw new InvalidOperationException("Cannot delete this template because active shift allocations are scheduled against it.");
 
-            _context.ShiftPatterns.Remove(pattern);
-            await _context.SaveChangesAsync();
+            _repo.Remove(pattern);
+            await _repo.SaveChangesAsync();
             return true;
         }
+
+        private static ShiftPatternDto MapToDto(ShiftPattern p) => new()
+        {
+            PatternID = p.PatternID,
+            PatternName = p.PatternName,
+            StartTime = p.StartTime,
+            EndTime = p.EndTime,
+            DurationHours = p.DurationHours,
+            BreakMinutes = p.BreakMinutes,
+            ShiftType = p.ShiftType.ToString(),
+            MinStaffingLevel = p.MinStaffingLevel,
+            Status = p.Status.ToString(),
+            LocationID = p.LocationID
+        };
     }
 }
