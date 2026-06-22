@@ -43,8 +43,9 @@ namespace ShiftMaster.Application.Implementation
 
             // 1. Fetch the target shift assignment record
             var shift = await _context.ShiftAssignments
-            .Include(sa => sa.Roster)
-                .FirstOrDefaultAsync(sa => sa.AssignmentID == assignmentId);
+                                        .Include(sa => sa.Roster)
+                                        .Include(sa => sa.Pattern) 
+                                         .FirstOrDefaultAsync(sa => sa.AssignmentID == assignmentId);
 
             if (shift == null) return;
 
@@ -165,42 +166,55 @@ namespace ShiftMaster.Application.Implementation
                 }
             }
 
+
             // ----------------------------------------------------------------------
-            // RULE 4: Skill Coverage Verification (Correctly Placed Outside Loops)
+            // RULE 4: ShiftPattern Headcount Validation (ONLY WHEN PUBLISHED)
             // ----------------------------------------------------------------------
 
-            var employeesOnShift = await _context.ShiftAssignments
-                .Where(s => s.RosterID == rosterId && s.AssignedDate.Date == targetDate)
+            var assignedCount = await _context.ShiftAssignments
+                .Where(s =>
+                    s.RosterID == rosterId &&
+                    s.AssignedDate.Date == targetDate &&
+                    s.ShiftPatternID == shift.ShiftPatternID &&
+                    s.Status != ShiftAssignmentStatus.Cancelled)
                 .Select(s => s.UserID)
                 .Distinct()
-                .ToListAsync();
+                .CountAsync();
 
-            if (skillRequirements.Any())
+            // ✅ Only validate when roster is Published
+            if (shift.Roster.Status == RosterStatus.Published&&
+                assignedCount < shift.Pattern.MinStaffingLevel)
             {
-                foreach (var req in skillRequirements)
+                _context.SchedulingConstraintViolations.Add(new SchedulingConstraintViolation
                 {
-                    int skilledCount = await _context.EmployeeSkills
-                        .Where(es =>
-                            employeesOnShift.Contains(es.UserID) &&
-                            es.SkillName == req.SkillName &&
-                            es.Status == ActiveStatus.Active)
-                        .CountAsync();
-
-                    if (skilledCount < req.MinCountPerShift)
-                    {
-                        _context.SchedulingConstraintViolations.Add(new SchedulingConstraintViolation
-                        {
-                            RosterID = rosterId,
-                            UserID = userId,
-                            ViolationType = ViolationType.SkillGap,
-                            Severity = SeverityLevel.Blocking,
-                            Status = ViolationStatus.Open
-                        });
-
-                        break;
-                    }
-                }
+                    RosterID = rosterId,
+                    UserID = userId,
+                    ViolationType = ViolationType.UnavailableEmployee, // ✅ MUST change this
+                    Severity = SeverityLevel.Blocking,
+                    Status = ViolationStatus.Open
+                });
             }
+
+
+            // ----------------------------------------------------------------------
+            // RULE 5: Role vs Employee Skill Match (NEW)
+            // ----------------------------------------------------------------------
+
+            bool hasRequiredSkill = employeeSkills
+                .Any(skill => skill.Equals(shift.Role.ToString(), StringComparison.OrdinalIgnoreCase));
+
+            if (!hasRequiredSkill)
+            {
+                _context.SchedulingConstraintViolations.Add(new SchedulingConstraintViolation
+                {
+                    RosterID = rosterId,
+                    UserID = userId,
+                    ViolationType = ViolationType.SkillGap,
+                    Severity = SeverityLevel.Blocking,
+                    Status = ViolationStatus.Open
+                });
+            }
+
             await _context.SaveChangesAsync();
             // ✅ 5. Check if ANY violation exists (blocking or not)
             bool hasViolation = await _context.SchedulingConstraintViolations
