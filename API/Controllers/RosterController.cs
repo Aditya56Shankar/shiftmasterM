@@ -62,6 +62,7 @@ namespace API.Controllers
             return Ok(response);
 
         }
+       
 
         [Authorize(Roles = "Supervisor")]
         [HttpPut("{id}/update-status")]
@@ -105,7 +106,6 @@ namespace API.Controllers
                 UpdatedBy = adminId
             });
         }
-
 
     }
 }
