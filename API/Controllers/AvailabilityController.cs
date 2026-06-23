@@ -1,10 +1,8 @@
 ﻿using AutoMapper;
-using Data.Context;
 using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
-using Services.Implementation;
 using Services.Interfaces;
 using shiftmaster.models;
 
@@ -14,50 +12,50 @@ namespace API.Controllers
     [ApiController]
     public class AvailabilityController : ControllerBase
     {
-        private readonly IAvailabilityRepository repository;
         private readonly IMapper mapper;
-        private readonly ApplicationDbContext db;
+        private readonly IAvailabilityService service;
 
-        public AvailabilityController(IMapper mapper, IAvailabilityRepository repository, ApplicationDbContext db)
+        public AvailabilityController(IMapper mapper, IAvailabilityService service)
         {
             this.mapper = mapper;
-            this.repository = repository;
-            this.db = db;
+            this.service = service;
         }
 
+        // ✅ POST: Add Availability
         [HttpPost]
         [Authorize(Roles = "Employee")]
-        public async Task<IActionResult> Availablity([FromBody] AvailabilityRequestDto avail)
+        public async Task<IActionResult> Availability([FromBody] AvailabilityRequestDto avail)
         {
-            var res = mapper.Map<AvailabilitySubmission>(avail);
-            await repository.AddAvailableAsync(res);
-            return Ok(mapper.Map<AvailabilityResponseDto>(res));
+            var entity = mapper.Map<AvailabilitySubmission>(avail);
+
+            var result = await service.AddAvailableAsync(entity);
+
+            return Ok(mapper.Map<AvailabilityResponseDto>(result));
         }
 
-        [HttpPut]
+        // ✅ PUT: Update Status
+        [HttpPut("{id}")]
         [Authorize(Roles = "Supervisor")]
-        public async Task<IActionResult> UpdateAvailabilityStatus(int id, AvailabilityStatus status)
+        public async Task<IActionResult> UpdateAvailabilityStatus(int id, [FromQuery] AvailabilityStatus status)
         {
-            var availability = await db.AvailabilitySubmissions.FindAsync(id);
-
-            if (availability == null)
-                return NotFound("Availability not found");
-
-            // ✅ Optional: prevent duplicate update
-            if (availability.Status == status)
-                return BadRequest("Status is already set to this value");
-
-            // ✅ Update only status
-            availability.Status = status;
-
-            await db.SaveChangesAsync();
-
-            return Ok(new
+            try
             {
-                message = "Availability status updated successfully",
-                AvailabilityID = availability.AvailabilityID,
-                UpdatedStatus = availability.Status
-            });
+                var updated = await service.UpdateAvailabilityStatusAsync(id, status);
+
+                if (!updated)
+                    return NotFound("Availability not found");
+
+                return Ok(new
+                {
+                    message = "Availability status updated successfully",
+                    AvailabilityID = id,
+                    UpdatedStatus = status
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

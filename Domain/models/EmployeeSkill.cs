@@ -13,7 +13,6 @@ namespace shiftmaster.models
         [Required] public DateTime CertifiedDate { get; set; }
         [Required] public ActiveStatus Status { get; set; }
 
-        // Foreign Keys & Navigation
         [Required] public int UserID { get; set; }
         public User Employee { get; set; }
     }

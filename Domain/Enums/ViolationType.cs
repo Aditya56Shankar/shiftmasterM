@@ -26,6 +26,10 @@ namespace Domain.Enums
 
         [Display(Name = "Invalid Skill Coverage")]
         [Description("The collective shift assignment lacks the required structural skill matrix required for safety compliance.")]
-        InvalidSkillCoverage = 5
+        InvalidSkillCoverage = 5,
+        [Display(Name = "Invalid staff Coverage")]
+        [Description("The collective shift assignment lacks the required structural staff .")]
+        UnderStaffed =6
+
     }
 }

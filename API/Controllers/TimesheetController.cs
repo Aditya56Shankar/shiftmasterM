@@ -17,14 +17,11 @@ public class TimesheetController : ControllerBase
         _repo = repo;
         _mapper = mapper;
     }
-    // ✅ POST: /api/timesheets
     [HttpPost]
     public async Task<IActionResult> SubmitTimesheet([FromBody] CreateTimesheetDto dto)
     {
-        // ✅ Generate Timesheet
         var result = await _repo.CreateTimesheetAsync(dto.UserID, dto.WeekStartDate);
 
-        // ✅ Map Entity → Response DTO
         var response = _mapper.Map<TimesheetDtoResponse>(result);
 
         return Ok(response);
@@ -50,7 +47,6 @@ public class TimesheetController : ControllerBase
     }
 
 
-    //  PUT → Approve (Supervisor)
     [Authorize(Roles = "Payroll")]
     [HttpPut("{id}/approve")]
     public async Task<IActionResult> ApproveTimesheet(int id)

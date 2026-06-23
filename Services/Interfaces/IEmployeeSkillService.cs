@@ -5,8 +5,9 @@ using shiftmaster.models;
 
 namespace Services.Interfaces
 {
-    public interface IAvailabilityRepository
+    public interface IEmployeeSkillService
     {
-        Task<AvailabilitySubmission> AddAvailableAsync(AvailabilitySubmission avail);
+        Task<EmployeeSkill> AddEmployeeSkillAsync(EmployeeSkill skill);
     }
+
 }

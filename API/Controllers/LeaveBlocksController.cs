@@ -1,13 +1,11 @@
 ﻿using System.Security.Claims;
 using AutoMapper;
-using Data.Context;
 using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Interfaces;
 using shiftmaster.models;
-using ShiftMaster.models;
 
 namespace API.Controllers
 {
@@ -15,67 +13,61 @@ namespace API.Controllers
     [Route("api/[controller]")]
     public class LeaveBlocksController : ControllerBase
     {
-        private readonly ILeaveBlockRepository repository;
+        private readonly ILeaveBlockService service;
         private readonly IMapper mapper;
-        private readonly ApplicationDbContext db;
-        public LeaveBlocksController(ILeaveBlockRepository repository, IMapper mapper, ApplicationDbContext db)
+
+        public LeaveBlocksController(ILeaveBlockService service, IMapper mapper)
         {
-            this.repository = repository;
+            this.service = service;
             this.mapper = mapper;
-            this.db = db;
         }
 
         [HttpPost]
+        [Authorize(Roles = "Employee")]
         public async Task<IActionResult> CreateLeave([FromBody] LeaveBlockRequestDto leave)
         {
-
             if (leave == null)
-            {
-                return BadRequest("enter correctly");
-            }
-            var res = mapper.Map<LeaveBlock>(leave);
-            var saved = await repository.AddLeaveBlockAsync(res);
+                return BadRequest("Invalid request");
+
+            var entity = mapper.Map<LeaveBlock>(leave);
+
+            var saved = await service.AddLeaveBlockAsync(entity);
+
             var response = mapper.Map<LeaveBlockResponseDto>(saved);
 
             return Ok(response);
         }
+
         [HttpPut("{id}")]
         [Authorize(Roles = "Supervisor")]
-        
-        public async Task<IActionResult> UpdateLeaveStatus(int id, LeaveStatus status)
+        public async Task<IActionResult> UpdateLeaveStatus(int id, [FromQuery] LeaveStatus status)
         {
-            var leave = await db.LeaveBlocks.FindAsync(id);
-
-            if (leave == null)
-                return NotFound("Leave not found");
-
-            // ✅ FIX: Use "nameid" instead of ClaimTypes
-            var userIdClaim = User.FindFirst("nameid")?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim))
-                return Unauthorized("User ID not found in token");
-
-            // ✅ Update status
-            leave.Status = status;
-
-            // ✅ Only set ApprovedBy when approving
-            if (status == LeaveStatus.Active)
+            try
             {
-                if (leave.ApprovedByID != null)
-                    return BadRequest("Leave already approved");
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                leave.ApprovedByID = int.Parse(userIdClaim);
+                if (string.IsNullOrEmpty(userIdClaim))
+                    return Unauthorized("User ID not found in token");
+
+                int approvedBy = int.Parse(userIdClaim);
+
+                var result = await service.UpdateLeaveStatusAsync(id, status, approvedBy);
+
+                if (!result)
+                    return NotFound("Leave not found");
+
+                return Ok(new
+                {
+                    message = $"Leave status updated to {status}",
+                    LeaveID = id,
+                    UpdatedStatus = status,
+                    ApprovedBy = approvedBy
+                });
             }
-
-            await db.SaveChangesAsync();
-
-            return Ok(new
+            catch (Exception ex)
             {
-                message = $"Leave status updated to {leave.Status}",
-                leave.LeaveBlockID,
-                leave.Status,
-                ApprovedBy = leave.ApprovedByID
-            });
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

@@ -19,9 +19,8 @@ namespace API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IRosterValidationService _validationService;
-        private readonly IMapper _mapper; // Added internal read-only private field tracking
+        private readonly IMapper _mapper; 
 
-        // Inject IMapper into your constructor alongside existing services
         public ShiftAssignmentController(
             ApplicationDbContext context,
             IRosterValidationService validationService,
@@ -50,9 +49,8 @@ namespace API.Controllers
 
             await _validationService.ValidateAssignmentConstraintsAsync(assignment.AssignmentID);
 
-            // ✅ RELOAD FROM DATABASE
             var updatedAssignment = await _context.ShiftAssignments
-                .AsNoTracking()    // ✅ VERY IMPORTANT
+                .AsNoTracking()    
                 .FirstOrDefaultAsync(a => a.AssignmentID == assignment.AssignmentID);
 
             return Ok(updatedAssignment);
