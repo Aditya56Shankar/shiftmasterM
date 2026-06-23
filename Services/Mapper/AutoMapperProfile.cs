@@ -9,22 +9,22 @@ namespace Services.Mapper
     {
         public AutoMapperProfile()
         {
-            // ✅ Create roster
+            //  Create roster
             CreateMap<CreateRosterDto, WeeklyRoster>()
                 .ForMember(dest => dest.WeekStartDate, opt => opt.MapFrom(src => src.WeekStartDate.Date))
                 .ForMember(dest => dest.WeekEndDate, opt => opt.MapFrom(src => src.WeekStartDate.Date.AddDays(6)))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => RosterStatus.Draft))
                 .ForMember(dest => dest.PublishedDate, opt => opt.MapFrom(src => DateTime.UtcNow));
 
-            // ✅ Roster response
+            //  Roster response
             CreateMap<WeeklyRoster, RosterResponseDto>();
 
-            // ✅ Supervisor roster (IMPORTANT FIX)
+            //  Supervisor roster 
             CreateMap<WeeklyRoster, SupervisorRosterResponseDto>()
                 .ForMember(dest => dest.ShiftAssignments, opt => opt.Ignore())
                 .ForMember(dest => dest.Violations, opt => opt.Ignore());
 
-            // ✅ Shift Assignment
+            //  Shift Assignment
             CreateMap<ShiftAssignment, SupervisorAssignmentViewDto>()
                 .ForMember(dest => dest.EmployeeName, opt => opt.Ignore())
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
@@ -32,23 +32,23 @@ namespace Services.Mapper
             CreateMap<CreateAssignmentDto, ShiftAssignment>()
                 .ForMember(dest => dest.AssignedDate, opt => opt.MapFrom(src => src.AssignedDate.Date));
 
-            // ✅ Violations
+            //  Violations
             CreateMap<SchedulingConstraintViolation, ViolationViewDto>()
                 .ForMember(dest => dest.ViolationType, opt => opt.MapFrom(src => src.ViolationType.ToString()))
                 .ForMember(dest => dest.Severity, opt => opt.MapFrom(src => src.Severity.ToString()))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
 
-            // ✅ Availability
+            //  Availability
             CreateMap<AvailabilityRequestDto, AvailabilitySubmission>();
             CreateMap<AvailabilitySubmission, AvailabilityResponseDto>();
 
-            // ✅ Leave
+            //  Leave
             CreateMap<LeaveBlockRequestDto, LeaveBlock>();
             CreateMap<LeaveBlock, LeaveBlockResponseDto>()
                 .ForMember(dest => dest.Reason, opt => opt.MapFrom(src => src.Reason.ToString()))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
 
-            // ✅ ✅ Employee Skill (VERY IMPORTANT FIX)
+            // Employee Skill (VERY IMPORTANT FIX)
             CreateMap<EmployeeSkillRequestDto, EmployeeSkill>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => ActiveStatus.Active));
 
@@ -61,7 +61,7 @@ namespace Services.Mapper
                     opt => opt.MapFrom(src => src.Status.ToString()));
 
 
-            // ✅ ✅ ATTENDANCE MAPPINGS
+            // ATTENDANCE MAPPINGS
             CreateMap<CreateAttendanceDto, AttendanceRecord>();
 
             CreateMap<AttendanceRecord, AttendanceDtoResponse>()
@@ -69,7 +69,7 @@ namespace Services.Mapper
                     opt => opt.MapFrom(src => src.Status.ToString())); // enum → string
 
 
-            // ✅ ✅ TIMESHEET MAPPINGS
+            // TIMESHEET MAPPINGS
             CreateMap<TimesheetSummary, TimesheetDtoResponse>()
                 .ForMember(dest => dest.Status,
                     opt => opt.MapFrom(src => src.Status.ToString())); // enum → string

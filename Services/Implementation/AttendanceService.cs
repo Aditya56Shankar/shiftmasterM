@@ -1,26 +1,19 @@
-﻿using Data.Context;
-using Domain.Enums;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Domain.Enums;
 using Services.Interfaces;
 using shiftmaster.models;
 
-public class AttendanceRepository : IAttendanceRepository
+public class AttendanceService : IAttendanceService
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IAttendanceRepository _repo;
 
-    public AttendanceRepository(ApplicationDbContext context)
+    public AttendanceService(IAttendanceRepository repo)
     {
-        _context = context;
+        _repo = repo;
     }
 
-    // ✅ CREATE ATTENDANCE
-    public async Task<AttendanceRecord> CreateAttendanceAsync(AttendanceRecord record)
+    public async Task<AttendanceRecord?> CreateAttendanceAsync(AttendanceRecord record)
     {
-        var assignment = await _context.Set<ShiftAssignment>()
-            .FirstOrDefaultAsync(a => a.AssignmentID == record.AssignmentID);
-
+        var assignment = await _repo.GetAssignmentAsync(record.AssignmentID);
         if (assignment == null) return null;
 
         var shiftStart = assignment.StartTime;
@@ -29,12 +22,11 @@ public class AttendanceRepository : IAttendanceRepository
         var clockIn = record.ClockIn;
         var clockOut = record.ClockOut;
 
-        // ✅ Safe work hours calc
+        // Work hours calculation
         if (clockIn.HasValue && clockOut.HasValue)
         {
             var totalMinutes = (clockOut.Value - clockIn.Value).TotalMinutes;
 
-            // ✅ Fix negative (night shift)
             if (totalMinutes < 0)
                 totalMinutes += 24 * 60;
 
@@ -60,23 +52,16 @@ public class AttendanceRepository : IAttendanceRepository
         {
             var clockInTime = clockIn.Value.TimeOfDay;
             var clockOutTime = clockOut?.TimeOfDay;
-
             var graceStart = shiftStart.Add(TimeSpan.FromMinutes(10));
 
             if (!isNightShift)
             {
                 if (clockInTime > graceStart)
-                {
                     record.Status = AttendanceStatus.Late;
-                }
                 else if (clockOut.HasValue && clockOutTime < shiftEnd)
-                {
                     record.Status = AttendanceStatus.EarlyLeave;
-                }
                 else
-                {
                     record.Status = AttendanceStatus.Present;
-                }
             }
             else
             {
@@ -88,30 +73,18 @@ public class AttendanceRepository : IAttendanceRepository
 
         record.VarianceMinutes = (int)((record.ActualHoursWorked - 8) * 60);
 
-        _context.AttendanceRecords.Add(record);
-        await _context.SaveChangesAsync();
-
+        await _repo.AddAttendanceAsync(record);
         return record;
     }
 
-    //  CREATE TIMESHEET (POST → Submitted)
     public async Task<TimesheetSummary> CreateTimesheetAsync(int userId, DateTime weekStart)
     {
-        var weekEnd = weekStart.AddDays(7);
-
-        //  Prevent duplicate timesheet
-        var existing = await _context.TimesheetSummaries
-            .FirstOrDefaultAsync(x => x.UserID == userId &&
-                                      x.WeekStartDate == weekStart);
+        var existing = await _repo.GetTimesheet(userId, weekStart);
 
         if (existing != null)
-            throw new InvalidOperationException("Timesheet already exists for this week");
+            throw new InvalidOperationException("Timesheet already exists");
 
-        var records = await _context.AttendanceRecords
-            .Where(x => x.UserID == userId &&
-                        x.WorkDate >= weekStart &&
-                        x.WorkDate < weekEnd)
-            .ToListAsync();
+        var records = await _repo.GetWeeklyRecords(userId, weekStart);
 
         decimal totalHours = records.Sum(x => x.ActualHoursWorked);
 
@@ -126,61 +99,55 @@ public class AttendanceRepository : IAttendanceRepository
             Status = TimesheetStatus.Submitted
         };
 
-        _context.TimesheetSummaries.Add(timesheet);
-        await _context.SaveChangesAsync();
-
+        await _repo.AddTimesheetAsync(timesheet);
         return timesheet;
     }
 
-    //  UPDATE STATUS
     public async Task<TimesheetSummary?> UpdateTimesheetStatusAsync(
     int timesheetId,
     TimesheetStatus newStatus,
     int userId)
     {
-        var timesheet = await _context.TimesheetSummaries
-            .FirstOrDefaultAsync(x => x.TimesheetID == timesheetId);
+        var timesheet = await _repo.GetTimesheetById(timesheetId);
 
-        if (timesheet == null)
-            return null;
+        if (timesheet == null) return null;
 
-        // ✅ Prevent updating if already final
-        if (timesheet.Status == TimesheetStatus.Approved)
-            throw new InvalidOperationException("Timesheet already approved and locked");
+        // ❌ Remove this (it blocks payroll step)
+        // if (timesheet.Status == TimesheetStatus.Approved)
+        //     throw new InvalidOperationException("Already approved");
 
-        // ✅ Prevent duplicate updates
         if (timesheet.Status == newStatus)
-            throw new InvalidOperationException($"Timesheet already in '{newStatus}' state");
+            throw new InvalidOperationException("Duplicate status update");
 
-        // ✅ Workflow validation
         switch (newStatus)
         {
-            case TimesheetStatus.SentToPayroll:
+            // ✅ Supervisor approves ONLY if Submitted
+            case TimesheetStatus.Approved:
                 if (timesheet.Status != TimesheetStatus.Submitted)
                     throw new InvalidOperationException(
-                        $"Cannot move to SentToPayroll from {timesheet.Status}");
+                        "Only submitted timesheets can be approved"
+                    );
 
-                // ✅ Track Supervisor who sent it
                 timesheet.ApprovedByID = userId;
                 break;
 
-            case TimesheetStatus.Approved:
-                if (timesheet.Status != TimesheetStatus.SentToPayroll)
+            // ✅ Payroll sends ONLY if Approved
+            case TimesheetStatus.SentToPayroll:
+                if (timesheet.Status != TimesheetStatus.Approved)
                     throw new InvalidOperationException(
-                        $"Cannot approve from {timesheet.Status}");
+                        "Only approved timesheets can be sent to payroll"
+                    );
 
-                // ✅ Track Payroll approver
-                timesheet.ApprovedByID = userId;
+                timesheet.ApprovedByID = userId; // optional field
                 break;
 
             default:
                 throw new InvalidOperationException("Invalid status transition");
         }
 
-        // ✅ Update status
         timesheet.Status = newStatus;
 
-        await _context.SaveChangesAsync();
+        await _repo.SaveChangesAsync();
 
         return timesheet;
     }
