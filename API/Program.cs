@@ -9,8 +9,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using NSwag;
+using NSwag.Generation.Processors.Security;
+using Services.Implementation;
 using Services.Implementation;
 using Services.Implementation.Repositories;
+using Services.Implementation.Repositories.Services.Implementation;
 using Services.Interfaces;
 using Services.Interfaces.Repositories;
 using Services.Mapper;
@@ -43,8 +46,16 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<ISkillRequirementService, SkillRequirementService>();
 builder.Services.AddScoped<IShiftPatternService, ShiftPatternService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+
+// ✅ APPLICATION SERVICES (VERY IMPORTANT)
+builder.Services.AddScoped<IAvailabilityService, AvailabilityService>();
+builder.Services.AddScoped<ILeaveBlockService, LeaveBlockService>();
+builder.Services.AddScoped<IEmployeeSkillService, EmployeeSkillService>();
+builder.Services.AddScoped<IWeeklyRosterService, WeeklyRosterService>();
+
 
 // =========================================================================
 // 3. WORKFLOW ENGINE SERVICES
@@ -55,12 +66,16 @@ builder.Services.AddScoped<IOvertimeService, OvertimeService>();
 builder.Services.AddScoped<IRosterValidationService, RosterValidationService>();
 
 // =========================================================================
-// 4. REPOSITORY DEPENDENCY INJECTION
+// 4. REPOSITORIES
 // =========================================================================
+
+// Core repositories
 builder.Services.AddScoped<ILeaveBlockRepository, LeaveBlockRepository>();
 builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
 builder.Services.AddScoped<IEmployeeSkillRepository, EmployeeSkillRepository>();
 builder.Services.AddScoped<IWeeklyRosterRepository, WeeklyRosterRepository>();
+
+// Others
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<ICoverAssignmentRepository, CoverAssignmentRepository>();
 builder.Services.AddScoped<IShiftSwapRepository, ShiftSwapRepository>();
@@ -74,6 +89,12 @@ builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IShiftPatternRepository, ShiftPatternRepository>();
 builder.Services.AddScoped<IWorkLocationRepository, WorkLocationRepository>();
 
+// ✅ RosterValidation dependencies
+builder.Services.AddScoped<IShiftRepository, ShiftRepository>();
+builder.Services.AddScoped<ILeaveRepository, LeaveRepository>();
+builder.Services.AddScoped<ISkillRepository, SkillRepository>();
+builder.Services.AddScoped<IViolationRepository, ViolationRepository>();
+builder.Services.AddScoped<IStatusCheckRepository, StatusCheckRepository>();
 // =========================================================================
 // 5. CONTROLLERS, JSON, & AUTOMAPPER CONFIGURATION
 // =========================================================================

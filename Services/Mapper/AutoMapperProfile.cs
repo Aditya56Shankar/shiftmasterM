@@ -30,9 +30,9 @@ namespace Services.Mapper
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
 
             CreateMap<CreateAssignmentDto, ShiftAssignment>()
-                .ForMember(dest => dest.AssignedDate, opt => opt.MapFrom(src => src.AssignedDate.Date));
-
-            // Violation Mappings
+                .ForMember(dest => dest.AssignedDate, opt => opt.MapFrom(src => src.AssignedDate.Date))
+                    .ForMember(dest => dest.Status, opt => opt.Ignore()); // ✅ PREVENT DEFAULT BUG
+            
             CreateMap<SchedulingConstraintViolation, ViolationViewDto>()
                 .ForMember(dest => dest.ViolationType, opt => opt.MapFrom(src => src.ViolationType.ToString()))
                 .ForMember(dest => dest.Severity, opt => opt.MapFrom(src => src.Severity.ToString()))
@@ -110,10 +110,16 @@ namespace Services.Mapper
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location != null ? src.Location.LocationName : "Unassigned"))
                 .ForMember(dest => dest.DepartmentName, opt => opt.MapFrom(src => src.Department != null ? src.Department.departmentName : "Unassigned"))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+            CreateMap<AttendanceRecord, AttendanceDtoResponse>()
+                .ForMember(dest => dest.Status,
+                    opt => opt.MapFrom(src => src.Status.ToString())); 
 
             CreateMap<CreateSkillRequirementDto, SkillRequirement>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => Enum.Parse<ActiveStatus>(src.Status, true)));
 
+            CreateMap<TimesheetSummary, TimesheetDtoResponse>()
+                .ForMember(dest => dest.Status,
+                    opt => opt.MapFrom(src => src.Status.ToString())); 
             CreateMap<UpdateSkillRequirementDto, SkillRequirement>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => Enum.Parse<ActiveStatus>(src.Status, true)));
 

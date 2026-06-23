@@ -1,112 +1,84 @@
 ﻿using System.Security.Claims;
 using AutoMapper;
-using Data.Context;
 using Domain.Enums;
-using Domain.models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Services.DTOs;
 using Services.Interfaces;
-using Services.Mapper;
 using shiftmaster.models;
+
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class RostersController : ControllerBase
     {
-        private readonly ApplicationDbContext db;
-
-        private readonly IWeeklyRosterRepository repository;
+        private readonly IWeeklyRosterService service;
         private readonly IMapper mapper;
 
-        public RostersController(IWeeklyRosterRepository repository, IMapper mapper, ApplicationDbContext db)
+        public RostersController(IWeeklyRosterService service, IMapper mapper)
         {
-            this.repository = repository;
+            this.service = service;
             this.mapper = mapper;
-            this.db = db;
         }
 
+        // ✅ CREATE
         [HttpPost]
         [Authorize(Roles = "Supervisor")]
         public async Task<IActionResult> CreateRoster([FromBody] CreateRosterDto dto)
         {
-            var res = mapper.Map<WeeklyRoster>(dto);
-            await repository.AddAsync(res);
+            var entity = mapper.Map<WeeklyRoster>(dto);
 
-            return Ok(mapper.Map<RosterResponseDto>(res));
+            var result = await service.AddAsync(entity);
+
+            return Ok(mapper.Map<RosterResponseDto>(result));
         }
 
-        //HLD Endpoint: GET /api/rosters/{locationId}/{week} (Action: Get roster)//Note: '{week}' represents the week start date string (e.g., "2026-06-15")
-        [HttpGet]
-        [Route("{locationId:int}/{week}")]
+        // ✅ GET
+        [HttpGet("{locationId:int}/{week}")]
         [Authorize(Roles = "Supervisor,Admin")]
         public async Task<IActionResult> GetRoster(int locationId, string week)
         {
-
             if (!DateTime.TryParse(week, out DateTime parsedDate))
-            {
-                return BadRequest("Invalid date format. Please use YYYY-MM-DD.");
-            }
+                return BadRequest("Invalid date format. Use YYYY-MM-DD");
 
-            var response = await repository.GetRosterAsync(locationId, parsedDate);
+            var response = await service.GetRosterAsync(locationId, parsedDate);
 
             if (response == null)
-            {
-                return NotFound("No roster found for this location and week.");
-            }
+                return NotFound("No roster found");
 
             return Ok(response);
-
         }
-       
 
-        [Authorize(Roles = "Supervisor")]
+        // ✅ UPDATE STATUS
         [HttpPut("{id}/update-status")]
+        [Authorize(Roles = "Supervisor")]
         public async Task<IActionResult> UpdateRosterStatus(int id, [FromQuery] string action)
         {
-            var roster = await db.WeeklyRosters.FindAsync(id);
-
-            if (roster == null)
-                return NotFound("Roster not found");
-
-            var userIdClaim = User.FindFirst("nameid")?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim))
-                return Unauthorized("User ID not found in token");
-
-            int adminId = int.Parse(userIdClaim);
-
-            action = action?.ToLower();
-
-            if (action == "publish")
+            try
             {
-                roster.Status = RosterStatus.Published;
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim))
+                    return Unauthorized("User ID not found");
+
+                int userId = int.Parse(userIdClaim);
+
+                var result = await service.UpdateRosterStatusAsync(id, action, userId);
+
+                if (!result)
+                    return NotFound("Roster not found");
+
+                return Ok(new
+                {
+                    message = $"Roster {action} successfully",
+                    UpdatedBy = userId
+                });
             }
-            else if (action == "amend")
+            catch (Exception ex)
             {
-                roster.Status = RosterStatus.Amended;
+                return BadRequest(ex.Message);
             }
-            else
-            {
-                return BadRequest("Invalid action. Use 'publish' or 'amend'");
-            }
-
-            roster.ApprovedByUserID = adminId;
-
-            await db.SaveChangesAsync();
-
-            return Ok(new
-            {
-                message = $"Roster {roster.Status} successfully",
-                Status = roster.Status,
-                UpdatedBy = adminId
-            });
         }
-
     }
 }
-

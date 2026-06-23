@@ -6,6 +6,6 @@ namespace Domain.Enums
 {
     public enum ShiftAssignmentStatus
     {
-        Cancelled,Assigned, Confirmed, Swapped, Covered
+        Assigned, Cancelled, Confirmed, Swapped, Covered
     }
 }

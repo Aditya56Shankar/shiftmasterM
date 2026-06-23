@@ -11,12 +11,12 @@ namespace API.Controllers
     [Route("api/[controller]")]
     public class EmployeeSkillController : ControllerBase
     {
-        private readonly IEmployeeSkillRepository repository;
+        private readonly IEmployeeSkillService service;
         private readonly IMapper mapper;
 
-        public EmployeeSkillController(IEmployeeSkillRepository repository, IMapper mapper)
+        public EmployeeSkillController(IEmployeeSkillService service, IMapper mapper)
         {
-            this.repository = repository;
+            this.service = service;
             this.mapper = mapper;
         }
 
@@ -25,8 +25,11 @@ namespace API.Controllers
         public async Task<IActionResult> AddSkill([FromBody] EmployeeSkillRequestDto request)
         {
             var entity = mapper.Map<EmployeeSkill>(request);
-            var saved = await repository.AddEmployeeSkillAsync(entity);
+
+            var saved = await service.AddEmployeeSkillAsync(entity);
+
             var response = mapper.Map<EmployeeSkillResponseDto>(saved);
+
             return Ok(response);
         }
     }

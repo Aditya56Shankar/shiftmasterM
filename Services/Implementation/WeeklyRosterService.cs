@@ -1,77 +1,82 @@
 ﻿using AutoMapper;
-using Data.Context;
 using Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 using Services.DTOs;
 using Services.Interfaces;
+using Services.Interfaces.Repositories;
 using shiftmaster.models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Services.Implementation
 {
-
-    public class WeeklyRosterRepository : IWeeklyRosterRepository
+    public class WeeklyRosterService : IWeeklyRosterService
     {
-        private readonly ApplicationDbContext db;
-
-
+        private readonly IWeeklyRosterRepository repository;
         private readonly IMapper mapper;
-        public WeeklyRosterRepository(ApplicationDbContext context, IMapper mapper)
+
+        public WeeklyRosterService(IWeeklyRosterRepository repository, IMapper mapper)
         {
-            db = context;
+            this.repository = repository;
             this.mapper = mapper;
         }
 
+        public async Task<bool> UpdateRosterStatusAsync(int id, string action, int userId)
+        {
+            var roster = await repository.GetRosterByIdAsync(id);
 
+            if (roster == null)
+                return false;
+
+            action = action?.ToLower();
+
+            if (action == "publish")
+            {
+                roster.Status = RosterStatus.Published;
+            }
+            else if (action == "amend")
+            {
+                roster.Status = RosterStatus.Amended;
+            }
+            else
+            {
+                throw new Exception("Invalid action. Use 'publish' or 'amend'");
+            }
+
+            roster.ApprovedByUserID = userId;
+
+            await repository.SaveAsync();
+            return true;
+        }
 
         public async Task<WeeklyRoster> AddAsync(WeeklyRoster roster)
         {
             var today = DateTime.UtcNow.Date;
 
-            if (today < roster.WeekStartDate)
-            {
-                roster.Status = RosterStatus.Draft;
-            }
-            else
-            {
-                roster.Status = RosterStatus.Published;
-            }
+            // ✅ Business logic
+            roster.Status = today < roster.WeekStartDate
+                ? RosterStatus.Draft
+                : RosterStatus.Published;
 
-            await db.WeeklyRosters.AddAsync(roster);
-            await db.SaveChangesAsync();
+            await repository.AddAsync(roster);
+            await repository.SaveAsync();
+
             return roster;
         }
 
-
         public async Task<SupervisorRosterResponseDto?> GetRosterAsync(int locationId, DateTime weekStartDate)
         {
-            var roster = await db.WeeklyRosters
-                .AsSplitQuery()
-                .Include(r => r.ShiftAssignments)
-                .Include(r => r.Violations)
-                .FirstOrDefaultAsync(r =>
-                    r.LocationID == locationId &&
-                    r.WeekStartDate == weekStartDate.Date);
+            var roster = await repository.GetRosterEntityAsync(locationId, weekStartDate);
 
             if (roster == null)
                 return null;
 
             var shiftAssignments = roster.ShiftAssignments ?? new List<ShiftAssignment>();
 
-            // ✅ Get user IDs
             var userIds = shiftAssignments
                 .Select(sa => sa.UserID)
                 .Distinct()
                 .ToList();
 
-            // ✅ Fetch user names
-            var users = await db.Users
-                .Where(u => userIds.Contains(u.UserID))
-                .ToDictionaryAsync(u => u.UserID, u => u.Name);
+            var users = await repository.GetUserNamesAsync(userIds);
 
-            // ✅ Map assignments
             var assignmentDtos = mapper.Map<List<SupervisorAssignmentViewDto>>(shiftAssignments);
 
             foreach (var a in assignmentDtos)
@@ -81,42 +86,40 @@ namespace Services.Implementation
                     : "Unknown Employee";
             }
 
-            // ✅ Map main response
             var response = mapper.Map<SupervisorRosterResponseDto>(roster);
 
             response.ShiftAssignments = assignmentDtos;
-            response.Violations = mapper.Map<List<ViolationViewDto>>(roster.Violations ?? new List<SchedulingConstraintViolation>());
+            response.Violations = mapper.Map<List<ViolationViewDto>>(
+                roster.Violations ?? new List<SchedulingConstraintViolation>());
+
             UpdateRosterStatus(roster);
+
             return response;
         }
+
         private void UpdateRosterStatus(WeeklyRoster roster)
         {
             var today = DateTime.UtcNow.Date;
 
-            // ✅ Published
             if (roster.PublishedDate != null)
             {
                 roster.Status = RosterStatus.Published;
                 return;
             }
 
-            // ✅ Pending approval
             if (roster.ApprovedByUserID == null)
             {
                 roster.Status = RosterStatus.PendingApproval;
                 return;
             }
 
-            // ✅ Draft
             if (today < roster.WeekStartDate)
             {
                 roster.Status = RosterStatus.Draft;
                 return;
             }
 
-            // ✅ Rejected
             roster.Status = RosterStatus.Amended;
         }
     }
-
 }
