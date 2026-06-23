@@ -26,10 +26,12 @@ namespace Services.Implementation.Repositories
 		public async Task<List<User>> GetActiveUsersByLocationAndDepartmentExceptAsync(int locationId, int departmentId, int excludedUserId)
 		{
 			return await _context.Users
+				.Include(u => u.Role)
 				.Where(u => u.LocationID == locationId
 					&& u.DepartmentID == departmentId
 					&& u.Status == UserStatus.Active
-					&& u.UserID != excludedUserId)
+					&& u.UserID != excludedUserId
+					&& u.Role.roleName == "FrontLine Employee")
 				.ToListAsync();
 		}
 

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Implementation.Exceptions;
@@ -17,6 +18,7 @@ namespace API.Controllers
 		}
 
 		[HttpGet("eligible-targets")]
+		[Authorize(Roles = "FrontLine Employee")]
 		public async Task<IActionResult> GetEligibleSwapTargets([FromQuery] int shiftAssignmentId)
 		{
 			var eligibleTargets = await _service.GetEligibleSwapTargetsAsync(shiftAssignmentId);
@@ -24,6 +26,7 @@ namespace API.Controllers
 		}
 
 		[HttpPost("request")]
+		[Authorize(Roles = "FrontLine Employee")]
 		public async Task<IActionResult> CreateSwapRequest([FromBody] CreateSwapRequestDto dto)
 		{
 			if (!ModelState.IsValid)
@@ -36,6 +39,7 @@ namespace API.Controllers
 		}
 
 		[HttpPut("{swapId}/respond")]
+		[Authorize(Roles = "FrontLine Employee")]
 		public async Task<IActionResult> RespondToSwap(int swapId, [FromBody] RespondToSwapDto dto)
 		{
 			if (!ModelState.IsValid)
@@ -59,6 +63,7 @@ namespace API.Controllers
 		}
 
 		[HttpPut("{swapId}/approve")]
+		[Authorize(Roles = "Shift Supervisior")]
 		public async Task<IActionResult> ApproveSwap(int swapId, [FromBody] ApproveSwapDto dto)
 		{
 			if (!ModelState.IsValid)
@@ -73,11 +78,11 @@ namespace API.Controllers
 			}
 			catch (ResourceNotFoundException ex)
 			{
-				return NotFound(ex.Message);
+				return NotFound("The Swap Id could not be found");
 			}
 			catch (InvalidWorkflowStateException ex)
 			{
-				return BadRequest(ex.Message);
+				return BadRequest("The Swap Request could not able to change");
 			}
 		}
 	}

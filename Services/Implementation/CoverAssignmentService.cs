@@ -36,7 +36,7 @@ namespace Services.Implementation
 
 			// Load required skills for this location and department
 			var requiredSkillNames = await _repository.GetRequiredSkillNamesAsync(locationId, departmentId);
-
+			//Making the skill to be in set to make thwn unique
 			var requiredSkillSet = new HashSet<string>(requiredSkillNames);
 
 			// Get all active users at the same location, excluding the original assignee
@@ -70,7 +70,7 @@ namespace Services.Implementation
 				// Calculate matching skills
 				var matchingSkills = userSkillSet.Intersect(requiredSkillSet).ToList();
 
-				if (matchingSkills.Count > 0)
+				if (matchingSkills.Count >= 0)
 				{
 					eligibleCoverers.Add(new CoverEligibilityDto
 					{
@@ -87,25 +87,17 @@ namespace Services.Implementation
 
 		public async Task<CoverAssignmentResponseDto> AssignCoverAsync(CreateCoverAssignmentDto dto)
 		{
-			var coverAssignment = new CoverAssignment
-			{
-				OriginalAssignmentID = dto.OriginalAssignmentID,
-				CoveringUserID = dto.CoveringUserID,
-				AssignedByID = dto.AssignedByID,
-				CoverType = dto.CoverType,
-				OvertimeApplicable = dto.OvertimeApplicable,
-				Status = CoverStatus.Assigned
-			};
+			var coverAssignment = _mapper.Map<CoverAssignment>(dto);
+            var originalAssignment = await _repository.GetShiftAssignmentByIdAsync(dto.OriginalAssignmentID);
 
-			await _repository.AddCoverAssignmentAsync(coverAssignment);
+            if (originalAssignment == null)
+            {
+                throw new ResourceNotFoundException($"Original shift assignment with ID {dto.OriginalAssignmentID} not found.");
+            }
+
+            await _repository.AddCoverAssignmentAsync(coverAssignment);
 
 			// Update the original shift assignment status to Covered
-			var originalAssignment = await _repository.GetShiftAssignmentByIdAsync(dto.OriginalAssignmentID);
-
-			if (originalAssignment == null)
-			{
-				throw new ResourceNotFoundException($"Original shift assignment with ID {dto.OriginalAssignmentID} not found.");
-			}
 
 			originalAssignment.Status = ShiftAssignmentStatus.Covered;
 			await _repository.SaveChangesAsync();

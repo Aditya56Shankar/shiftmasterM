@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Implementation.Exceptions;
@@ -17,6 +18,7 @@ namespace API.Controllers
 		}
 
 		[HttpGet("eligible")]
+		[Authorize(Roles = "Shift Supervisior")]
 		public async Task<IActionResult> GetEligibleCovers([FromQuery] int shiftAssignmentId)
 		{
 			try
@@ -31,6 +33,7 @@ namespace API.Controllers
 		}
 
 		[HttpPost("assign")]
+		[Authorize(Roles = "Shift Supervisior")]
 		public async Task<IActionResult> AssignCover([FromBody] CreateCoverAssignmentDto dto)
 		{
 			if (!ModelState.IsValid)
