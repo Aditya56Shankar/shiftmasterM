@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Implementation.Exceptions;
@@ -17,6 +18,7 @@ namespace API.Controllers
 		}
 
 		[HttpGet("pending")]
+		[Authorize(Roles = "Shift Supervisior")]
 		public async Task<IActionResult> GetPendingOvertime([FromQuery] int locationId)
 		{
 			var pendingOvertime = await _service.GetPendingOvertimeAsync(locationId);
@@ -24,6 +26,7 @@ namespace API.Controllers
 		}
 
 		[HttpPost("log")]
+		[Authorize(Roles = "FrontLine Employee")]
 		public async Task<IActionResult> LogOvertime([FromBody] CreateOvertimeDto dto)
 		{
 			if (!ModelState.IsValid)
@@ -36,6 +39,7 @@ namespace API.Controllers
 		}
 
 		[HttpPut("{otId}/authorize")]
+		[Authorize(Roles = "Shift Supervisior")]
 		public async Task<IActionResult> AuthoriseOvertime(int otId, [FromBody] AuthoriseOvertimeDto dto)
 		{
 			if (!ModelState.IsValid)

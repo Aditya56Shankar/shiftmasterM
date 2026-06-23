@@ -38,16 +38,7 @@ namespace Services.Implementation
 
 		public async Task<OvertimeAuthorisationResponseDto> LogOvertimeAsync(CreateOvertimeDto dto)
 		{
-			var overtimeAuthorisation = new OvertimeAuthorisation
-			{
-				UserID = dto.UserID,
-				AuthorisedByID = dto.AuthorisedByID,
-				WeekStartDate = dto.WeekStartDate,
-				PlannedOTHours = dto.PlannedOTHours,
-				ActualOTHours = dto.ActualOTHours,
-				OTType = dto.OTType,
-				Status = ApprovalStatus.Pending
-			};
+			var overtimeAuthorisation = _mapper.Map<OvertimeAuthorisation>(dto);
 
 			await _repository.AddOvertimeAsync(overtimeAuthorisation);
 
