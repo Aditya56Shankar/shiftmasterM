@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Data.Context;
 using Domain.Enums;
+using Domain.Interfaces;
 using Domain.models;
 using Microsoft.EntityFrameworkCore;
 using Services.DTOs;
@@ -15,31 +16,32 @@ namespace Services.Implementation
 {
     public class WorkLocationService : IWorkLocationService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IWorkLocationRepository _repository;
 
-        public WorkLocationService(ApplicationDbContext context)
+        // Notice we inject the Repository here, NOT the DbContext!
+        public WorkLocationService(IWorkLocationRepository repository)
         {
-            _context = context;
+            _repository = repository;
         }
 
         public async Task<IEnumerable<WorkLocationDto>> GetAllLocationsAsync()
         {
-            return await _context.WorkLocations
-                .Select(l => new WorkLocationDto
-                {
-                    LocationID = l.LocationID,
-                    LocationName = l.LocationName,
-                    Type = l.Type.ToString(),
-                    City = l.City,
-                    ManagerID = l.ManagerID ?? 0,
-                    OperatingHours = l.OperatingHours,
-                    Status = l.Status.ToString()
-                }).ToListAsync();
+            var locations = await _repository.GetAllAsync();
+            return locations.Select(l => new WorkLocationDto
+            {
+                LocationID = l.LocationID,
+                LocationName = l.LocationName,
+                Type = l.Type.ToString(),
+                City = l.City,
+                ManagerID = l.ManagerID ?? 0,
+                OperatingHours = l.OperatingHours,
+                Status = l.Status.ToString()
+            });
         }
 
         public async Task<WorkLocationDto?> GetLocationByIdAsync(int locationId)
         {
-            var l = await _context.WorkLocations.FindAsync(locationId);
+            var l = await _repository.GetByIdAsync(locationId);
             if (l == null) return null;
 
             return new WorkLocationDto
@@ -61,21 +63,20 @@ namespace Services.Implementation
                 LocationName = newLocation.LocationName,
                 Type = Enum.Parse<Domain.Enums.LocationType>(newLocation.Type, true),
                 City = newLocation.City,
-                // Since your DB column is nullable, passing null breaks the circular loop!
                 ManagerID = null,
                 OperatingHours = newLocation.OperatingHours,
                 Status = Domain.Enums.ActiveStatus.Active
             };
 
-            _context.WorkLocations.Add(location);
-            await _context.SaveChangesAsync();
+            await _repository.AddAsync(location);
+            await _repository.SaveChangesAsync();
 
             return await GetLocationByIdAsync(location.LocationID);
         }
 
         public async Task<WorkLocationDto?> UpdateLocationAsync(int id, UpdateWorkLocationDto dto)
         {
-            var location = await _context.WorkLocations.FindAsync(id);
+            var location = await _repository.GetByIdAsync(id);
             if (location == null) return null;
 
             location.LocationName = dto.LocationName;
@@ -85,32 +86,35 @@ namespace Services.Implementation
             location.Status = Enum.Parse<ActiveStatus>(dto.Status, true);
             location.ManagerID = dto.ManagerID;
 
-            await _context.SaveChangesAsync();
+            _repository.Update(location);
+            await _repository.SaveChangesAsync();
 
-            return new WorkLocationDto { LocationID = location.LocationID, LocationName = location.LocationName /* Map other properties as per your model */ };
+            // Note: Fixed your incomplete mapping from the original snippet here
+            return await GetLocationByIdAsync(location.LocationID);
         }
 
         public async Task<bool> DeleteLocationAsync(int id)
         {
-            var location = await _context.WorkLocations.FindAsync(id);
+            var location = await _repository.GetByIdAsync(id);
             if (location == null) return false;
 
-            // Protection Check: Avoid accidental user orphan cascade drops
-            var hasLinkedUsers = await _context.Users.AnyAsync(u => u.LocationID == id);
+            // Business logic/protection check stays in the service layer!
+            var hasLinkedUsers = await _repository.HasLinkedUsersAsync(id);
             if (hasLinkedUsers) throw new InvalidOperationException("Cannot delete location because employees are currently assigned to it.");
 
-            _context.WorkLocations.Remove(location);
-            await _context.SaveChangesAsync();
+            _repository.Remove(location);
+            await _repository.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> UpdateLocationStatusAsync(int locationId, string status)
         {
-            var location = await _context.WorkLocations.FindAsync(locationId);
+            var location = await _repository.GetByIdAsync(locationId);
             if (location == null) return false;
 
             location.Status = Enum.Parse<ActiveStatus>(status, true);
-            await _context.SaveChangesAsync();
+            _repository.Update(location);
+            await _repository.SaveChangesAsync();
             return true;
         }
     }

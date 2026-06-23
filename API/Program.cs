@@ -16,6 +16,7 @@ using Services.Interfaces.Repositories;
 using Services.Mapper;
 using ShiftMaster.Application.Implementation;
 using NSwag.Generation.Processors.Security;
+using Domain.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +72,7 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<ISkillRequirementRepository, SkillRequirementRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IShiftPatternRepository, ShiftPatternRepository>();
+builder.Services.AddScoped<IWorkLocationRepository, WorkLocationRepository>();
 
 // =========================================================================
 // 5. CONTROLLERS, JSON, & AUTOMAPPER CONFIGURATION
