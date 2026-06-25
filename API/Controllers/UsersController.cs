@@ -90,12 +90,6 @@ namespace ShiftMaster.Controllers
 
             return Ok(adminUserDto);
         }
-        public async Task<ActionResult<UserDto>> UpdateUser(int id, UpdateUserDto dto)
-        {
-            var updated = await _userService.UpdateUserAsync(id, dto);
-            if (updated == null) return NotFound();
-            return Ok(updated);
-        }
 
       
     }
