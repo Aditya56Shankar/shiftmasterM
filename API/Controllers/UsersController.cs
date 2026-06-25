@@ -1,12 +1,8 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
-using Data.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Services.DTOs;
-using Services.Implementation;
 using Services.Interfaces;
 
 namespace ShiftMaster.Controllers
@@ -17,16 +13,13 @@ namespace ShiftMaster.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly ApplicationDbContext _context;
         private readonly IAuditService _auditService;
-        private readonly IUserService _userService;
 
-        public UsersController(IAuthService authService, ApplicationDbContext context, IAuditService auditService, IUserService userService)
+        public UsersController(IAuthService authService, IAuditService auditService)
         {
             _authService = authService;
-            _context = context;
             _auditService = auditService;
-            _userService = userService;
+            //
         }
 
         private string GetClientIpAddress() =>
@@ -47,11 +40,8 @@ namespace ShiftMaster.Controllers
             {
                 var result = await _authService.RegisterAsync(dto);
 
-                // Optimized: Only select the UserID instead of tracking the full entity
-                var userId = await _context.Users
-                    .Where(u => u.Email == dto.Email)
-                    .Select(u => (int?)u.UserID)
-                    .FirstOrDefaultAsync();
+                // Delegated to the user service
+                var userId = await _authService.GetUserIdByEmailAsync(dto.Email);
 
                 await _auditService.LogRegistrationAsync(userId, true, ipAddress, userAgent, "Web", "User registered successfully");
 
@@ -65,7 +55,7 @@ namespace ShiftMaster.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginDto dto)  // dto taked value from body of the request
         {
             var ipAddress = GetClientIpAddress();
             var userAgent = GetUserAgent();
@@ -74,11 +64,8 @@ namespace ShiftMaster.Controllers
             {
                 var token = await _authService.LoginAsync(dto);
 
-                // Optimized: Only select the UserID instead of tracking the full entity
-                var userId = await _context.Users
-                    .Where(u => u.Email == dto.Email)
-                    .Select(u => (int?)u.UserID)
-                    .FirstOrDefaultAsync();
+                // Delegated to the user service
+                var userId = await _authService.GetUserIdByEmailAsync(dto.Email);
 
                 await _auditService.LogLoginAttemptAsync(userId, true, ipAddress, userAgent, "Password", "Web", "Login successful");
 
@@ -92,32 +79,31 @@ namespace ShiftMaster.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Supervisor")]
         public async Task<IActionResult> GetUserById(int id)
         {
-            var adminUserDto = await _context.Users
-                .AsNoTracking() // Optimized: Faster read-only query
-                .Where(u => u.UserID == id)
-                .Select(u => new AdminUserDto
-                {
-                    UserId = u.UserID,
-                    EmployeeID = u.EmployeeID,
-                    Name = u.Name,
-                    Email = u.Email,
-                    Phone = u.Phone,
-                    LocationName = u.HomeLocation.LocationName,
-                    RoleName = u.Role.roleName.ToString(),
-                    DepartmentName = u.Department.departmentName
-                })
-                .FirstOrDefaultAsync();
+            // Delegated to the user service
+            var adminUserDto = await _authService.GetAdminUserByIdAsync(id);
 
             if (adminUserDto == null)
                 return NotFound(new { message = "User not found." });
 
             return Ok(adminUserDto);
         }
+        public async Task<ActionResult<UserDto>> UpdateUser(int id, UpdateUserDto dto)
+        {
+            var updated = await _userService.UpdateUserAsync(id, dto);
+            if (updated == null) return NotFound();
+            return Ok(updated);
+        }
 
-        [HttpPut("{id}")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var success = await _userService.DeleteUserAsync(id);
+            if (!success) return NotFound();
+            return NoContent();
+        }
         public async Task<ActionResult<UserDto>> UpdateUser(int id, UpdateUserDto dto)
         {
             var updated = await _userService.UpdateUserAsync(id, dto);

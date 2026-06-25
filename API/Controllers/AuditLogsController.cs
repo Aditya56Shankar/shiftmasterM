@@ -1,53 +1,28 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Data.Context;
-using Services.DTOs; // <- use your Services DTO namespace
-using System.Linq;
+using Services.Interfaces;
 
 namespace ShiftMaster.Controllers
 {
-    [Authorize(Policy = "RequireAdminOnly")]
+    [Authorize(Roles = "Admin,Supervisor")]
     [ApiController]
     [Route("api/auditlogs")]
     [Produces("application/json")]
     public class AuditLogsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IAuditService _auditService;
 
-        public AuditLogsController(ApplicationDbContext context)
+        public AuditLogsController(IAuditService auditService)
         {
-            _context = context;
+            _auditService = auditService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllAuditLogs()
         {
-            var logs = await _context.AuditLogs
-                .Select(a => new AuditLogDto
-                {
-                    AuditID = a.AuditID,
-                    Action = a.Action,
-                    EntityType = a.EntityType,
-                    RecordID = a.RecordID,
-                    Timestamp = a.Timestamp,
-                    UserID = a.UserID,
-                    Actor = a.Actor == null ? null : new ActorDto
-                    {
-                        UserID = a.Actor.UserID,
-                        Name = a.Actor.Name
-                    },
-                    IsSuccess = a.IsSuccess,
-                    IPAddress = a.IPAddress,
-                    UserAgent = a.UserAgent,
-                    Details = a.Details,
-                    AuthMethod = a.AuthMethod,
-                    CorrelationId = a.CorrelationId,
-                    Source = a.Source,
-                    ClientAppVersion = a.ClientAppVersion
-                })
-                .ToListAsync();
+            // Delegated to the service layer
+            var logs = await _auditService.GetAllAuditLogsAsync();
 
             return Ok(logs);
         }

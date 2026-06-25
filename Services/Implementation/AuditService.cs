@@ -1,5 +1,5 @@
-using Data.Context;
-using Microsoft.EntityFrameworkCore;
+using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Services.Interfaces;
 using shiftmaster.models;
@@ -11,12 +11,12 @@ namespace Services.Implementation
     /// </summary>
     public class AuditService : IAuditService
     {
-        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
+        private readonly IAuditRepository _auditRepository;
         private readonly ILogger<AuditService> _logger;
 
-        public AuditService(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<AuditService> logger)
+        public AuditService(IAuditRepository auditRepository, ILogger<AuditService> logger)
         {
-            _contextFactory = contextFactory;
+            _auditRepository = auditRepository;
             _logger = logger;
         }
 
@@ -34,36 +34,33 @@ namespace Services.Implementation
         {
             try
             {
-                using (var context = _contextFactory.CreateDbContext())
+                var auditLog = new AuditLog
                 {
-                    var auditLog = new AuditLog
-                    {
-                        Action = isSuccess ? "UserLogin" : "UserLoginFailed",
-                        EntityType = "User",
-                        RecordID = userId,
-                        UserID = userId,
-                        Timestamp = DateTime.UtcNow,
-                        IsSuccess = isSuccess,
-                        IPAddress = ipAddress,
-                        UserAgent = userAgent,
-                        AuthMethod = authMethod,
-                        CorrelationId = correlationId ?? GenerateCorrelationId(),
-                        Source = source,
-                        Details = details,
-                        ClientAppVersion = clientAppVersion
-                    };
+                    Action = isSuccess ? "UserLogin" : "UserLoginFailed",
+                    EntityType = "User",
+                    RecordID = userId,
+                    UserID = userId,
+                    Timestamp = DateTime.UtcNow,
+                    IsSuccess = isSuccess,
+                    IPAddress = ipAddress,
+                    UserAgent = userAgent,
+                    AuthMethod = authMethod,
+                    CorrelationId = correlationId ?? GenerateCorrelationId(),
+                    Source = source,
+                    Details = details,
+                    ClientAppVersion = clientAppVersion
+                };
 
-                    context.AuditLogs.Add(auditLog);
-                    await context.SaveChangesAsync();
+                // Delegated to the repository
+                await _auditRepository.AddAuditLogAsync(auditLog);
 
-                    var logLevel = isSuccess ? LogLevel.Information : LogLevel.Warning;
-                    _logger.Log(
-                        logLevel,
-                        "Login attempt logged: UserId={UserId}, Success={Success}, CorrelationId={CorrelationId}",
-                        userId,
-                        isSuccess,
-                        auditLog.CorrelationId);
-                }
+                var logLevel = isSuccess ? LogLevel.Information : LogLevel.Warning;
+                _logger.Log(
+                    logLevel,
+                    "Login attempt logged: UserId={UserId}, Success={Success}, CorrelationId={CorrelationId}",
+                    userId,
+                    isSuccess,
+                    auditLog.CorrelationId);
             }
             catch (Exception ex)
             {
@@ -89,36 +86,33 @@ namespace Services.Implementation
         {
             try
             {
-                using (var context = _contextFactory.CreateDbContext())
+                var auditLog = new AuditLog
                 {
-                    var auditLog = new AuditLog
-                    {
-                        Action = isSuccess ? "UserRegister" : "UserRegisterFailed",
-                        EntityType = "User",
-                        RecordID = userId,
-                        UserID = userId,
-                        Timestamp = DateTime.UtcNow,
-                        IsSuccess = isSuccess,
-                        IPAddress = ipAddress,
-                        UserAgent = userAgent,
-                        AuthMethod = "SelfRegister",
-                        CorrelationId = correlationId ?? GenerateCorrelationId(),
-                        Source = source,
-                        Details = details,
-                        ClientAppVersion = clientAppVersion
-                    };
+                    Action = isSuccess ? "UserRegister" : "UserRegisterFailed",
+                    EntityType = "User",
+                    RecordID = userId,
+                    UserID = userId,
+                    Timestamp = DateTime.UtcNow,
+                    IsSuccess = isSuccess,
+                    IPAddress = ipAddress,
+                    UserAgent = userAgent,
+                    AuthMethod = "SelfRegister",
+                    CorrelationId = correlationId ?? GenerateCorrelationId(),
+                    Source = source,
+                    Details = details,
+                    ClientAppVersion = clientAppVersion
+                };
 
-                    context.AuditLogs.Add(auditLog);
-                    await context.SaveChangesAsync();
+                // Delegated to the repository
+                await _auditRepository.AddAuditLogAsync(auditLog);
 
-                    var logLevel = isSuccess ? LogLevel.Information : LogLevel.Warning;
-                    _logger.Log(
-                        logLevel,
-                        "Registration logged: UserId={UserId}, Success={Success}, CorrelationId={CorrelationId}",
-                        userId,
-                        isSuccess,
-                        auditLog.CorrelationId);
-                }
+                var logLevel = isSuccess ? LogLevel.Information : LogLevel.Warning;
+                _logger.Log(
+                    logLevel,
+                    "Registration logged: UserId={UserId}, Success={Success}, CorrelationId={CorrelationId}",
+                    userId,
+                    isSuccess,
+                    auditLog.CorrelationId);
             }
             catch (Exception ex)
             {
@@ -143,32 +137,29 @@ namespace Services.Implementation
         {
             try
             {
-                using (var context = _contextFactory.CreateDbContext())
+                var auditLog = new AuditLog
                 {
-                    var auditLog = new AuditLog
-                    {
-                        Action = action,
-                        EntityType = entityType,
-                        RecordID = recordId,
-                        UserID = userId,
-                        Timestamp = DateTime.UtcNow,
-                        IsSuccess = true,
-                        IPAddress = ipAddress,
-                        UserAgent = userAgent,
-                        CorrelationId = GenerateCorrelationId(),
-                        Details = details
-                    };
+                    Action = action,
+                    EntityType = entityType,
+                    RecordID = recordId,
+                    UserID = userId,
+                    Timestamp = DateTime.UtcNow,
+                    IsSuccess = true,
+                    IPAddress = ipAddress,
+                    UserAgent = userAgent,
+                    CorrelationId = GenerateCorrelationId(),
+                    Details = details
+                };
 
-                    context.AuditLogs.Add(auditLog);
-                    await context.SaveChangesAsync();
+                // Delegated to the repository
+                await _auditRepository.AddAuditLogAsync(auditLog);
 
-                    _logger.LogInformation(
-                        "Audit event logged: Action={Action}, EntityType={EntityType}, RecordId={RecordId}, UserId={UserId}",
-                        action,
-                        entityType,
-                        recordId,
-                        userId);
-                }
+                _logger.LogInformation(
+                    "Audit event logged: Action={Action}, EntityType={EntityType}, RecordId={RecordId}, UserId={UserId}",
+                    action,
+                    entityType,
+                    recordId,
+                    userId);
             }
             catch (Exception ex)
             {
@@ -187,6 +178,18 @@ namespace Services.Implementation
         private static string GenerateCorrelationId()
         {
             return Guid.NewGuid().ToString("D").Substring(0, 8); // 8-char GUID part
+        }
+        public async Task<IEnumerable<AuditLog>> GetAllAuditLogsAsync()
+        {
+            try
+            {
+                return await _auditRepository.GetAllAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while retrieving all audit logs.");
+                throw; // Rethrow because the controller needs to know it failed
+            }
         }
     }
 }
