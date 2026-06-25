@@ -86,6 +86,11 @@ builder.Services.AddScoped<ICoverAssignmentRepository, CoverAssignmentRepository
 builder.Services.AddScoped<IShiftSwapRepository, ShiftSwapRepository>();
 builder.Services.AddScoped<IOvertimeRepository, OvertimeRepository>();
 
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+// Ensure AuthService is also still registered
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuditRepository, AuditRepository>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 // New repositories added below
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
