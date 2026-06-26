@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Interfaces;
 
@@ -18,6 +19,8 @@ namespace API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
+
         public async Task<ActionResult<IEnumerable<SkillRequirementDto>>> GetAllRequirements()
         {
             var requirements = await _service.GetAllRequirementsAsync();
@@ -25,6 +28,8 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<ActionResult<SkillRequirementDto>> GetRequirementById(int id)
         {
             var requirement = await _service.GetRequirementByIdAsync(id);
@@ -34,6 +39,8 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
+
         public async Task<ActionResult<SkillRequirementDto>> CreateRequirement(CreateSkillRequirementDto newReq)
         {
             var createdReq = await _service.CreateRequirementAsync(newReq);
@@ -41,6 +48,8 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<ActionResult<SkillRequirementDto>> UpdateRequirement(int id, UpdateSkillRequirementDto dto)
         {
             var updated = await _service.UpdateRequirementAsync(id, dto);
@@ -49,6 +58,8 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> DeleteRequirement(int id)
         {
             var success = await _service.DeleteRequirementAsync(id);

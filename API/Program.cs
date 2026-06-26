@@ -4,6 +4,7 @@ using System.Text;
 using AutoMapper;
 using Data.Context;
 using Data.Implementation;
+using Domain.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;

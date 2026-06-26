@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Services.DTOs;
 using Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
@@ -18,6 +19,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles ="HR")]
         public async Task<ActionResult<IEnumerable<DepartmentDto>>> GetAllDepartments()
         {
             var departments = await _departmentService.GetAllDepartmentsAsync();
@@ -25,6 +27,7 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "HR")]
         public async Task<ActionResult<DepartmentDto>> GetDepartmentById(int id)
         {
             var department = await _departmentService.GetDepartmentByIdAsync(id);
@@ -34,6 +37,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "HR")]
         public async Task<ActionResult<DepartmentDto>> CreateDepartment(CreateDepartmentDto newDepartment)
         {
             var createdDepartment = await _departmentService.CreateDepartmentAsync(newDepartment);
@@ -41,6 +45,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "HR")]
         public async Task<ActionResult<DepartmentDto>> UpdateDepartment(int id, UpdateDepartmentDto dto)
         {
             var updated = await _departmentService.UpdateDepartmentAsync(id, dto);
@@ -49,6 +54,8 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "HR")]
+
         public async Task<IActionResult> DeleteDepartment(int id)
         {
             try

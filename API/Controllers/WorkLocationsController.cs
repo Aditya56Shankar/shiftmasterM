@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Interfaces;
 
@@ -19,6 +20,8 @@ namespace API.Controllers
 
         // GET: api/worklocations
         [HttpGet]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> GetAll()
         {
             var locations = await _locationService.GetAllLocationsAsync();
@@ -27,6 +30,8 @@ namespace API.Controllers
 
         // GET: api/worklocations/{id}
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> GetById(int id)
         {
             var location = await _locationService.GetLocationByIdAsync(id);
@@ -39,6 +44,8 @@ namespace API.Controllers
 
         // POST: api/worklocations
         [HttpPost]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> Create([FromBody] CreateWorkLocationDto newLocation)
         {
             // This checks if the incoming JSON matches your CreateWorkLocationDto structure
@@ -55,6 +62,8 @@ namespace API.Controllers
 
         // PUT: api/worklocations/{id}
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> Update(int id, [FromBody] UpdateWorkLocationDto dto)
         {
             var updated = await _locationService.UpdateLocationAsync(id, dto);
@@ -64,6 +73,8 @@ namespace API.Controllers
 
         // DELETE: api/worklocations/{id}
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> Delete(int id)
         {
             try

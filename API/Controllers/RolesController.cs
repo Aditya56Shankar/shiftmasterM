@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Interfaces;
 
@@ -18,6 +19,8 @@ namespace API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
+
         public async Task<ActionResult<IEnumerable<RoleDto>>> GetAllRoles()
         {
             var roles = await _roleService.GetAllRolesAsync();
@@ -25,6 +28,8 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<ActionResult<RoleDto>> GetRoleById(int id)
         {
             var role = await _roleService.GetRoleByIdAsync(id);
@@ -34,6 +39,8 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
+
         public async Task<ActionResult<RoleDto>> CreateRole(CreateRoleDto newRole)
         {
             var createdRole = await _roleService.CreateRoleAsync(newRole);
@@ -41,6 +48,8 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<ActionResult<RoleDto>> UpdateRole(int id, UpdateRoleDto dto)
         {
             var updated = await _roleService.UpdateRoleAsync(id, dto);
@@ -49,6 +58,8 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> DeleteRole(int id)
         {
             try

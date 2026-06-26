@@ -80,12 +80,15 @@ namespace API.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+
+                var userIdClaim = User.FindFirst("nameid")?.Value;
 
                 if (string.IsNullOrEmpty(userIdClaim))
                     return Unauthorized("User ID not found");
 
                 int userId = int.Parse(userIdClaim);
+
 
                 var result = await service.UpdateRosterStatusAsync(id, action, userId);
 
