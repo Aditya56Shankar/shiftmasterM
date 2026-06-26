@@ -105,6 +105,8 @@ namespace Services.Mapper
             // ShiftPattern Mappings
             CreateMap<ShiftPattern, ShiftPatternDto>().ReverseMap();
             CreateMap<CreateShiftPatternDto, ShiftPattern>();
+            // ATTENDANCE MAPPINGS
+            CreateMap<CreateAttendanceDto, AttendanceRecord>();
 
             // SkillRequirement Mappings
             CreateMap<SkillRequirement, SkillRequirementDto>()

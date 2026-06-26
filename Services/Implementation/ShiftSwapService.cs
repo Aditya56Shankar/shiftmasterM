@@ -66,15 +66,7 @@ namespace Services.Implementation
 
 		public async Task<SwapRequestResponseDto> CreateSwapRequestAsync(CreateSwapRequestDto dto)
 		{
-			var swapRequest = new SwapRequest
-			{
-				RequesterUserID = dto.RequesterUserID,
-				TargetUserID = dto.TargetUserID,
-				OriginalAssignmentID = dto.OriginalAssignmentID,
-				ProposedAssignmentID = dto.ProposedAssignmentID,
-				Reason = dto.Reason,
-				Status = ApprovalStatus.Pending
-			};
+			var swapRequest = _mapper.Map<SwapRequest>(dto);
 
 			await _repository.AddSwapRequestAsync(swapRequest);
 

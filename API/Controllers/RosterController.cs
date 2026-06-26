@@ -29,7 +29,7 @@ namespace API.Controllers
 
         // ✅ CREATE
         [HttpPost]
-        [Authorize(Roles = "Supervisor")]
+        [Authorize(Roles = "Shift Supervisior")]
         public async Task<IActionResult> CreateRoster([FromBody] CreateRosterDto dto)
         {
             var entity = mapper.Map<WeeklyRoster>(dto);

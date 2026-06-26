@@ -9,27 +9,27 @@ using shiftmaster.models;
 [Route("api/attendance")]
 public class AttendanceController : ControllerBase
 {
-    private readonly IAttendanceRepository _repo;
+    private readonly IAttendanceService _repo;
     private readonly IMapper _mapper;
 
-    public AttendanceController(IAttendanceRepository repo, IMapper mapper)
+    public AttendanceController(IAttendanceService repo, IMapper mapper)
     {
         _repo = repo;
         _mapper = mapper;
     }
 
-    // ✅ POST: /api/attendance
+    //  POST: /api/attendance
     [HttpPost]
     [Authorize(Roles = "Employee")]
     public async Task<IActionResult> RecordAttendance([FromBody] CreateAttendanceDto dto)
     {
-        // ✅ Map DTO → Entity
+        //  Map DTO → Entity
         var entity = _mapper.Map<AttendanceRecord>(dto);
 
-        // ✅ Save
+        //  Save
         var result = await _repo.CreateAttendanceAsync(entity);
 
-        // ✅ Map Entity → Response DTO
+        // Map Entity → Response DTO
         var response = _mapper.Map<AttendanceDtoResponse>(result);
 
         return Ok(response);
