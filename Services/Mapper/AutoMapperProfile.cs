@@ -4,6 +4,7 @@ using Domain.Enums;
 using Domain.models;
 using Services.DTOs;
 using shiftmaster.models;
+using ShiftMaster.models;
 
 namespace Services.Mapper
 {
@@ -126,6 +127,24 @@ namespace Services.Mapper
             // WorkLocation Mappings
             CreateMap<WorkLocation, WorkLocationDto>().ReverseMap();
             CreateMap<UpdateWorkLocationDto, WorkLocation>();
+
+            // employe by id and date
+            // ✅ Employee full mapping
+            CreateMap<User, EmployeeFullDto>()
+                .ForMember(dest => dest.EmployeeId, opt => opt.MapFrom(src => src.UserID))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+                .ForMember(dest => dest.Availability, opt => opt.MapFrom(src => src.Availabilities))
+                .ForMember(dest => dest.Skills, opt => opt.MapFrom(src => src.Skills));
+
+            // ✅ Availability mapping
+            CreateMap<AvailabilitySubmission, AvailabilityDto>()
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+
+            // ✅ Skill mapping
+            CreateMap<EmployeeSkill, EmployeeSkillDto>()
+                .ForMember(dest => dest.ProficiencyLevel, opt => opt.MapFrom(src => src.ProficiencyLevel.ToString()))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+
         }
     }
 }

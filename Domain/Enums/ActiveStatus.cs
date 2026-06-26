@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿    using System;
+    using System.Collections.Generic;
+    using System.Text;
 
-namespace Domain.Enums
-{
-    public enum ActiveStatus
+    namespace Domain.Enums
     {
-        Active, Inactive
+        public enum ActiveStatus
+        {
+            Active, Inactive
+        }
     }
-}

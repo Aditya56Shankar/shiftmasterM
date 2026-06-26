@@ -4,6 +4,7 @@ using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
+using Services.Implementation;
 using Services.Interfaces;
 using shiftmaster.models;
 
@@ -15,11 +16,15 @@ namespace API.Controllers
     {
         private readonly IWeeklyRosterService service;
         private readonly IMapper mapper;
+        private readonly IEmployeeService _employeeService;
 
-        public RostersController(IWeeklyRosterService service, IMapper mapper)
+        public RostersController(IWeeklyRosterService service, IMapper mapper, IEmployeeService employeeService)
         {
             this.service = service;
             this.mapper = mapper;
+
+            this._employeeService = employeeService;
+
         }
 
         // ✅ CREATE
@@ -49,6 +54,24 @@ namespace API.Controllers
 
             return Ok(response);
         }
+
+        [Authorize(Roles = "Supervisor")]
+
+        [HttpGet("{locationId:int}/employees/{date}")]
+        public async Task<IActionResult> GetEmployeesFull(int locationId, string date)
+        { 
+        
+            if (!DateTime.TryParse(date, out DateTime parsedDate))
+                return BadRequest("Invalid date format. Use YYYY-MM-DD");
+
+            var result = await _employeeService.GetEmployeesFullData(locationId, parsedDate);
+
+            if (result == null || !result.Any())
+                return NotFound("No employees found");
+
+            return Ok(result);
+        }
+
 
         // ✅ UPDATE STATUS
         [HttpPut("{id}/update-status")]

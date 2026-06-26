@@ -11,7 +11,6 @@ using Microsoft.OpenApi;
 using NSwag;
 using NSwag.Generation.Processors.Security;
 using Services.Implementation;
-using Services.Implementation;
 using Services.Implementation.Repositories;
 using Services.Implementation.Repositories.Services.Implementation;
 using Services.Interfaces;
@@ -46,10 +45,9 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<ISkillRequirementService, SkillRequirementService>();
 builder.Services.AddScoped<IShiftPatternService, ShiftPatternService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
-
+builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
 // ✅ APPLICATION SERVICES (VERY IMPORTANT)
 builder.Services.AddScoped<IAvailabilityService, AvailabilityService>();
 builder.Services.AddScoped<ILeaveBlockService, LeaveBlockService>();
@@ -71,7 +69,6 @@ builder.Services.AddScoped<IRosterValidationService, RosterValidationService>();
 
 // Core repositories
 builder.Services.AddScoped<ILeaveBlockRepository, LeaveBlockRepository>();
-builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
 builder.Services.AddScoped<IEmployeeSkillRepository, EmployeeSkillRepository>();
 builder.Services.AddScoped<IWeeklyRosterRepository, WeeklyRosterRepository>();
 
@@ -80,7 +77,8 @@ builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<ICoverAssignmentRepository, CoverAssignmentRepository>();
 builder.Services.AddScoped<IShiftSwapRepository, ShiftSwapRepository>();
 builder.Services.AddScoped<IOvertimeRepository, OvertimeRepository>();
-
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 // New repositories added below
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();

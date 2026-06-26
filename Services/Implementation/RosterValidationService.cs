@@ -18,6 +18,8 @@ namespace ShiftMaster.Application.Implementation
         private readonly IViolationRepository _violationRepo;
         private readonly IStatusCheckRepository _statusRepo;
         private readonly IAvailabilityRepository _availabilityRepo;
+       
+
 
         public RosterValidationService(
             IShiftRepository shiftRepo,
@@ -25,7 +27,8 @@ namespace ShiftMaster.Application.Implementation
             ISkillRepository skillRepo,
             IViolationRepository violationRepo,
             IStatusCheckRepository statusRepo,
-            IAvailabilityRepository availabilityRepo)
+            IAvailabilityRepository availabilityRepo
+            )
         {
             _shiftRepo = shiftRepo;
             _leaveRepo = leaveRepo;
@@ -33,6 +36,7 @@ namespace ShiftMaster.Application.Implementation
             _violationRepo = violationRepo;
             _statusRepo = statusRepo;
             _availabilityRepo = availabilityRepo;
+            
         }
 
         public async Task ValidateAssignmentConstraintsAsync(int assignmentId)
@@ -45,6 +49,8 @@ namespace ShiftMaster.Application.Implementation
 
             int rosterId = shift.RosterID;
             int userId = shift.UserID;
+
+
             DateTime targetDate = shift.AssignedDate.Date;
 
 
