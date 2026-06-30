@@ -11,12 +11,12 @@ namespace Services.Implementation
     /// </summary>
     public class AuditService : IAuditService
     {
-        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
+        private readonly IDbContextFactory<ApplicationDbContext> _context;
         private readonly ILogger<AuditService> _logger;
 
-        public AuditService(IDbContextFactory<ApplicationDbContext> contextFactory, ILogger<AuditService> logger)
+        public AuditService(IDbContextFactory<ApplicationDbContext> context, ILogger<AuditService> logger)
         {
-            _contextFactory = contextFactory;
+            _context = context;
             _logger = logger;
         }
 
@@ -34,7 +34,7 @@ namespace Services.Implementation
         {
             try
             {
-                using (var context = _contextFactory.CreateDbContext())
+                using (var context = _context.CreateDbContext())
                 {
                     var auditLog = new AuditLog
                     {
@@ -89,7 +89,7 @@ namespace Services.Implementation
         {
             try
             {
-                using (var context = _contextFactory.CreateDbContext())
+                using (var context = _context.CreateDbContext())
                 {
                     var auditLog = new AuditLog
                     {
@@ -143,7 +143,7 @@ namespace Services.Implementation
         {
             try
             {
-                using (var context = _contextFactory.CreateDbContext())
+                using (var context = _context.CreateDbContext())
                 {
                     var auditLog = new AuditLog
                     {

@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace ShiftMaster.Controllers
 {
-    [Authorize(Policy = "RequireAdminOnly")]
+    [Authorize(Roles = "Shift Supervisior")]
     [ApiController]
     [Route("api/auditlogs")]
     [Produces("application/json")]

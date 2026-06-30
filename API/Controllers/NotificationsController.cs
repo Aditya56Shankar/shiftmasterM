@@ -7,7 +7,7 @@ using Services.Interfaces;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/notifications")]
     public class NotificationsController : ControllerBase
     {
         private readonly INotificationService _service;

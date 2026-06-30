@@ -10,7 +10,7 @@ using shiftmaster.models;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/leave")]
     public class LeaveBlocksController : ControllerBase
     {
         private readonly ILeaveBlockService service;

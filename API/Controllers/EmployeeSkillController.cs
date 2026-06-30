@@ -8,7 +8,7 @@ using shiftmaster.models;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/employeeskill")]
     public class EmployeeSkillController : ControllerBase
     {
         private readonly IEmployeeSkillService service;

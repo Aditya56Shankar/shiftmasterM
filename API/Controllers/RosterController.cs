@@ -9,7 +9,7 @@ using shiftmaster.models;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/rosters")]
     [ApiController]
     public class RostersController : ControllerBase
     {
@@ -24,7 +24,7 @@ namespace API.Controllers
 
         // ✅ CREATE
         [HttpPost]
-        [Authorize(Roles = "Supervisor")]
+        [Authorize(Roles = "Shift Supervisior")]
         public async Task<IActionResult> CreateRoster([FromBody] CreateRosterDto dto)
         {
             var entity = mapper.Map<WeeklyRoster>(dto);
@@ -36,7 +36,7 @@ namespace API.Controllers
 
         // ✅ GET
         [HttpGet("{locationId:int}/{week}")]
-        [Authorize(Roles = "Supervisor,Admin")]
+        [Authorize(Roles = "Shift Supervisior,Admin")]
         public async Task<IActionResult> GetRoster(int locationId, string week)
         {
             if (!DateTime.TryParse(week, out DateTime parsedDate))
@@ -52,7 +52,7 @@ namespace API.Controllers
 
         // ✅ UPDATE STATUS
         [HttpPut("{id}/update-status")]
-        [Authorize(Roles = "Supervisor")]
+        [Authorize(Roles = "Shift Supervisior")]
         public async Task<IActionResult> UpdateRosterStatus(int id, [FromQuery] string action)
         {
             try

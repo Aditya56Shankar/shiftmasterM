@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Interfaces;
 
@@ -7,7 +8,7 @@ namespace API.Controllers
     // This tells .NET that this class handles web API requests
     [ApiController]
     // This automatically sets the URL route to /api/worklocations
-    [Route("api/[controller]")]
+    [Route("api/worklocations")]
     public class WorkLocationsController : ControllerBase
     {
         private readonly IWorkLocationService _locationService;
@@ -19,6 +20,7 @@ namespace API.Controllers
 
         // GET: api/worklocations
         [HttpGet]
+        [Authorize(Roles = "HR")]
         public async Task<IActionResult> GetAll()
         {
             var locations = await _locationService.GetAllLocationsAsync();
@@ -27,6 +29,7 @@ namespace API.Controllers
 
         // GET: api/worklocations/{id}
         [HttpGet("{id}")]
+        [Authorize(Roles = "HR")]
         public async Task<IActionResult> GetById(int id)
         {
             var location = await _locationService.GetLocationByIdAsync(id);
@@ -39,6 +42,7 @@ namespace API.Controllers
 
         // POST: api/worklocations
         [HttpPost]
+        [Authorize(Roles = "HR")]
         public async Task<IActionResult> Create([FromBody] CreateWorkLocationDto newLocation)
         {
             // This checks if the incoming JSON matches your CreateWorkLocationDto structure
@@ -55,6 +59,7 @@ namespace API.Controllers
 
         // PUT: api/worklocations/{id}
         [HttpPut("{id}")]
+        [Authorize(Roles = "HR")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateWorkLocationDto dto)
         {
             var updated = await _locationService.UpdateLocationAsync(id, dto);
@@ -64,6 +69,7 @@ namespace API.Controllers
 
         // DELETE: api/worklocations/{id}
         [HttpDelete("{id}")]
+        [Authorize(Roles = "HR")]
         public async Task<IActionResult> Delete(int id)
         {
             try

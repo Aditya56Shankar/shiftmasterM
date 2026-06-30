@@ -51,5 +51,28 @@ namespace API.Controllers
 				return NotFound(ex.Message);
 			}
 		}
+
+		[HttpPost("{coverId}/confirm")]
+		[Authorize(Roles = "FrontLine Employee")]
+		public async Task<IActionResult> ConfirmCover(int coverId, [FromQuery] int actorUserId)
+		{
+			if (coverId <= 0 || actorUserId <= 0)
+    		{
+        		return BadRequest("coverId and UserID must be greater than 0.");
+    		}
+			try
+			{
+				var coverAssignment = await _service.ConfirmCoverAsync(coverId, actorUserId);
+				return Ok(coverAssignment);
+			}
+			catch (ResourceNotFoundException ex)
+			{
+				return NotFound(ex.Message);
+			}
+			catch (InvalidWorkflowStateException ex)
+			{
+				return BadRequest(ex.Message);
+			}
+		}
 	}
 }

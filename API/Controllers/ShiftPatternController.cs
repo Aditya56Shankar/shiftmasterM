@@ -8,7 +8,7 @@ using Services.Interfaces;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/shiftpattern")]
     public class ShiftPatternsController : ControllerBase
     {
         private readonly IShiftPatternService _service;

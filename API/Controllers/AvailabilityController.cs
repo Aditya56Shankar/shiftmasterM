@@ -8,7 +8,7 @@ using shiftmaster.models;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/availability")]
     [ApiController]
     public class AvailabilityController : ControllerBase
     {

@@ -7,7 +7,7 @@ using Domain.Enums; // Adjust namespace to match your project
 using Microsoft.EntityFrameworkCore;
 using Services.DTOs;
 using Services.Interfaces;
-using Services.Interfaces.Repositories;
+using Domain.Repositories;
 using shiftmaster.models; // Adjust to match your ShiftPattern domain model namespace
 using AutoMapper;
 

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Services.Interfaces;
-using Services.Interfaces.Repositories;
+using Domain.Repositories;
 using shiftmaster.models;
 
 namespace ShiftMaster.Application.Implementation
