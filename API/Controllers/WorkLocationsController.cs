@@ -8,7 +8,7 @@ namespace API.Controllers
     // This tells .NET that this class handles web API requests
     [ApiController]
     // This automatically sets the URL route to /api/worklocations
-    [Route("api/[controller]")]
+    [Route("api/worklocations")]
     public class WorkLocationsController : ControllerBase
     {
         private readonly IWorkLocationService _locationService;

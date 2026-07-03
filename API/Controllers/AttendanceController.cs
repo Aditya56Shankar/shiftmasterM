@@ -20,7 +20,7 @@ public class AttendanceController : ControllerBase
 
     //  POST: /api/attendance
     [HttpPost]
-    [Authorize(Roles = "Employee")]
+    [Authorize(Roles = "FrontLine Employee")]
     public async Task<IActionResult> RecordAttendance([FromBody] CreateAttendanceDto dto)
     {
         //  Map DTO → Entity

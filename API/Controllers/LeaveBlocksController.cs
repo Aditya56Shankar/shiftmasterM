@@ -10,7 +10,7 @@ using shiftmaster.models;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/leave")]
     public class LeaveBlocksController : ControllerBase
     {
         private readonly ILeaveBlockService service;
@@ -23,7 +23,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "FrontLine Employee")]
         public async Task<IActionResult> CreateLeave([FromBody] LeaveBlockRequestDto leave)
         {
             if (leave == null)
@@ -39,7 +39,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Supervisor")]
+        [Authorize(Roles = "Shift Supervisor")]
         public async Task<IActionResult> UpdateLeaveStatus(int id, [FromQuery] LeaveStatus status)
         {
             try

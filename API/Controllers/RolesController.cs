@@ -8,7 +8,7 @@ using Services.Interfaces;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/roles")]
     public class RolesController : ControllerBase
     {
         private readonly IRoleService _roleService;

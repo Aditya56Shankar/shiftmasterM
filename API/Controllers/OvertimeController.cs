@@ -18,7 +18,7 @@ namespace API.Controllers
 		}
 
 		[HttpGet("pending")]
-		[Authorize(Roles = "Shift Supervisior")]
+		[Authorize(Roles = "Shift Supervisor")]
 		public async Task<IActionResult> GetPendingOvertime([FromQuery] int locationId)
 		{
 			var pendingOvertime = await _service.GetPendingOvertimeAsync(locationId);
@@ -39,7 +39,7 @@ namespace API.Controllers
 		}
 
 		[HttpPut("{otId}/authorize")]
-		[Authorize(Roles = "Shift Supervisior")]
+		[Authorize(Roles = "Shift Supervisor")]
 		public async Task<IActionResult> AuthoriseOvertime(int otId, [FromBody] AuthoriseOvertimeDto dto)
 		{
 			if (!ModelState.IsValid)

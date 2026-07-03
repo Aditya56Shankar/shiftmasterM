@@ -52,7 +52,6 @@ namespace Services.Implementation
 
         public async Task<string> LoginAsync(LoginDto dto)
         {
-            // Replaced _context query with repository method
             var user = await _authRepository.GetUserByEmailWithRoleAsync(dto.Email);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
@@ -75,8 +74,8 @@ namespace Services.Implementation
                     new Claim("role", user.Role?.roleName.ToString() ?? "User")
                 }),
                 Expires = DateTime.UtcNow.AddMinutes(30),
-                Issuer = _configuration["Jwt:Issuer"] ?? "ShiftMasterAPI",
-                Audience = _configuration["Jwt:Audience"] ?? "ShiftMasterUsers",
+                Issuer = _configuration["Jwt:Issuer"],
+                Audience = _configuration["Jwt:Audience"],
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature) 
             };
 

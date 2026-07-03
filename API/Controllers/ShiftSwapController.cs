@@ -63,7 +63,7 @@ namespace API.Controllers
 		}
 
 		[HttpPut("{swapId}/approve")]
-		[Authorize(Roles = "Shift Supervisior")]
+		[Authorize(Roles = "Shift Supervisor")]
 		public async Task<IActionResult> ApproveSwap(int swapId, [FromBody] ApproveSwapDto dto)
 		{
 			if (!ModelState.IsValid)

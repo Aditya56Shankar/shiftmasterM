@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Domain.models;
 using Services.DTOs;
 using Services.Interfaces;
-using Services.Interfaces.Repositories;
+using Domain.Repositories;
 
 namespace Services.Implementation
 {

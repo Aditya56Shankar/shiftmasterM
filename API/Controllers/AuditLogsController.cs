@@ -5,7 +5,7 @@ using Services.Interfaces;
 
 namespace ShiftMaster.Controllers
 {
-    [Authorize(Roles = "Admin,Supervisor")]
+    [Authorize(Roles = "Shift Supervisor")]
     [ApiController]
     [Route("api/auditlogs")]
     [Produces("application/json")]

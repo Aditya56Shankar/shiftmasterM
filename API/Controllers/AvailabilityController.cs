@@ -8,7 +8,7 @@ using shiftmaster.models;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/availability")]
     [ApiController]
     public class AvailabilityController : ControllerBase
     {
@@ -23,7 +23,7 @@ namespace API.Controllers
 
         // ✅ POST: Add Availability
         [HttpPost]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "FrontLine Employee")]
         public async Task<IActionResult> Availability([FromBody] AvailabilityRequestDto avail)
         {
             var entity = mapper.Map<AvailabilitySubmission>(avail);
@@ -35,7 +35,7 @@ namespace API.Controllers
 
         // ✅ PUT: Update Status
         [HttpPut("{id}")]
-        [Authorize(Roles = "Supervisor")]
+        [Authorize(Roles = "Shift Supervisor")]
         public async Task<IActionResult> UpdateAvailabilityStatus(int id, [FromQuery] AvailabilityStatus status)
         {
             try

@@ -1,6 +1,6 @@
 <Solution>
-  <Project Path="API/API.csproj" />
-  <Project Path="Data/Data.csproj" />
-  <Project Path="Domain/Domain.csproj" />
-  <Project Path="Services/Services.csproj" />
+  <Project Path="API/shiftMaster.API.csproj" />
+  <Project Path="Data/shiftMaster.Data.csproj" />
+  <Project Path="Domain/shiftMaster.Domain.csproj" />
+  <Project Path="Services/shiftMaster.Services.csproj" />
 </Solution>

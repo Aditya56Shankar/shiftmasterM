@@ -6,9 +6,7 @@ using shiftmaster.models;
 
 namespace Services.Implementation
 {
-    /// <summary>
     /// Service implementation for audit logging of authentication events and other critical operations.
-    /// </summary>
     public class AuditService : IAuditService
     {
         private readonly IAuditRepository _auditRepository;
@@ -20,7 +18,6 @@ namespace Services.Implementation
             _logger = logger;
         }
 
-        /// <inheritdoc/>
         public async Task LogLoginAttemptAsync(
             int? userId,
             bool isSuccess,
@@ -73,7 +70,6 @@ namespace Services.Implementation
             }
         }
 
-        /// <inheritdoc/>
         public async Task LogRegistrationAsync(
             int? userId,
             bool isSuccess,
@@ -125,7 +121,6 @@ namespace Services.Implementation
             }
         }
 
-        /// <inheritdoc/>
         public async Task LogAuditEventAsync(
             string action,
             string entityType,
@@ -172,9 +167,7 @@ namespace Services.Implementation
             }
         }
 
-        /// <summary>
         /// Generate a unique correlation ID for tracing requests across the system.
-        /// </summary>
         private static string GenerateCorrelationId()
         {
             return Guid.NewGuid().ToString("D").Substring(0, 8); // 8-char GUID part

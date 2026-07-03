@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/departments")]
     public class DepartmentsController : ControllerBase
     {
         private readonly IDepartmentService _departmentService;
@@ -19,7 +19,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles ="HR")]
+        [Authorize(Roles = "HR")]
         public async Task<ActionResult<IEnumerable<DepartmentDto>>> GetAllDepartments()
         {
             var departments = await _departmentService.GetAllDepartmentsAsync();

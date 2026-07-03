@@ -3,7 +3,7 @@ using Domain.Enums;
 using Services.DTOs;
 using Services.Implementation.Exceptions;
 using Services.Interfaces;
-using Services.Interfaces.Repositories;
+using Domain.Repositories;
 using shiftmaster.models;
 
 namespace Services.Implementation
@@ -36,7 +36,8 @@ namespace Services.Implementation
 
 			// Load required skills for this location and department
 			var requiredSkillNames = await _repository.GetRequiredSkillNamesAsync(locationId, departmentId);
-			//Making the skill to be in set to make thwn unique
+
+			//Making the skill to be in set to make them unique
 			var requiredSkillSet = new HashSet<string>(requiredSkillNames);
 
 			// Get all active users at the same location, excluding the original assignee
@@ -100,6 +101,40 @@ namespace Services.Implementation
 			// Update the original shift assignment status to Covered
 
 			originalAssignment.Status = ShiftAssignmentStatus.Covered;
+			await _repository.SaveChangesAsync();
+
+			return _mapper.Map<CoverAssignmentResponseDto>(coverAssignment);
+		}
+
+		public async Task<CoverAssignmentResponseDto> ConfirmCoverAsync(int coverId, int actorUserId)
+		{
+			var coverAssignment = await _repository.GetCoverAssignmentByIdAsync(coverId);
+
+			if (coverAssignment == null)
+			{
+				throw new ResourceNotFoundException($"Cover assignment with ID {coverId} not found.");
+			}
+
+			if (coverAssignment.Status != CoverStatus.Assigned)
+			{
+				throw new InvalidWorkflowStateException("Cover assignment is not in assigned state.");
+			}
+
+			if (coverAssignment.CoveringUserID != actorUserId)
+			{
+				throw new InvalidWorkflowStateException("Only the assigned covering employee can confirm this cover request.");
+			}
+
+			var shiftAssignment = await _repository.GetShiftAssignmentByIdAsync(coverAssignment.OriginalAssignmentID);
+
+			if (shiftAssignment == null)
+			{
+				throw new ResourceNotFoundException($"Original shift assignment with ID {coverAssignment.OriginalAssignmentID} not found.");
+			}
+
+			coverAssignment.Status = CoverStatus.Confirmed;
+			shiftAssignment.UserID = coverAssignment.CoveringUserID;
+
 			await _repository.SaveChangesAsync();
 
 			return _mapper.Map<CoverAssignmentResponseDto>(coverAssignment);

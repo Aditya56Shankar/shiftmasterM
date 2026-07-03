@@ -12,9 +12,8 @@ using shiftmaster.models;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/shiftassignment")]
     [ApiController]
-    //[Authorize(Roles = "Supervisor")]
     public class ShiftAssignmentController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -32,7 +31,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Supervisor")]
+        [Authorize(Roles = "Shift Supervisor")]
 
 
         public async Task<IActionResult> AssignShift([FromBody] CreateAssignmentDto dto)

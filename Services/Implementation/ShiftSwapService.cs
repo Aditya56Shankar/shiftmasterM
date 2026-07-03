@@ -3,7 +3,7 @@ using Domain.Enums;
 using Services.DTOs;
 using Services.Implementation.Exceptions;
 using Services.Interfaces;
-using Services.Interfaces.Repositories;
+using Domain.Repositories;
 using shiftmaster.models;
 
 namespace Services.Implementation
@@ -50,7 +50,7 @@ namespace Services.Implementation
 					continue;
 
 				// Find any shift assignment this user has in the same roster week
-				var targetAssignment = await _repository.GetUserAssignmentInWeekAsync(user.UserID, rosterWeekStart, rosterWeekEnd);
+				var targetAssignment = await _repository.GetUserAssignmentInWeekAsync(user.UserID, rosterWeekStart, rosterWeekEnd, assignedDate);
 
 				eligibleTargets.Add(new SwapEligibilityDto
 				{

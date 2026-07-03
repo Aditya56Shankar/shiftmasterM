@@ -19,7 +19,6 @@ namespace ShiftMaster.Controllers
         {
             _authService = authService;
             _auditService = auditService;
-            //
         }
 
         private string GetClientIpAddress() =>
@@ -57,6 +56,10 @@ namespace ShiftMaster.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)  // dto taked value from body of the request
         {
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var ipAddress = GetClientIpAddress();
             var userAgent = GetUserAgent();
 
@@ -79,7 +82,7 @@ namespace ShiftMaster.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Supervisor")]
+        [Authorize(Roles = "Scheduling Admin,Shift Supervisor")]
         public async Task<IActionResult> GetUserById(int id)
         {
             // Delegated to the user service
@@ -90,7 +93,5 @@ namespace ShiftMaster.Controllers
 
             return Ok(adminUserDto);
         }
-
-      
     }
 }

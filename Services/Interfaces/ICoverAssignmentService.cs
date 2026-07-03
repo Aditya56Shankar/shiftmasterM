@@ -6,5 +6,6 @@ namespace Services.Interfaces
 	{
 		Task<List<CoverEligibilityDto>> GetEligibleCoversAsync(int shiftAssignmentId);
 		Task<CoverAssignmentResponseDto> AssignCoverAsync(CreateCoverAssignmentDto dto);
+		Task<CoverAssignmentResponseDto> ConfirmCoverAsync(int coverId, int actorUserId);
 	}
 }

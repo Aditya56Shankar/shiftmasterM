@@ -9,7 +9,7 @@ using Services.Interfaces;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/shiftpattern")]
     public class ShiftPatternsController : ControllerBase
     {
         private readonly IShiftPatternService _service;
@@ -21,7 +21,7 @@ namespace API.Controllers
 
         // 1. GET: api/shiftpatterns
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Scheduling Admin")]
 
         public async Task<ActionResult<IEnumerable<ShiftPatternDto>>> GetAll()
         {
@@ -31,7 +31,7 @@ namespace API.Controllers
 
         // 2. GET: api/shiftpatterns/{id}
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Scheduling Admin")]
 
         public async Task<ActionResult<ShiftPatternDto>> GetById(int id)
         {
@@ -42,7 +42,7 @@ namespace API.Controllers
 
         // 3. POST: api/shiftpatterns
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Scheduling Admin")]
 
         public async Task<ActionResult<ShiftPatternDto>> Create([FromBody] CreateShiftPatternDto dto)
         {
@@ -52,7 +52,7 @@ namespace API.Controllers
 
         // 4. PUT: api/shiftpatterns/{id}
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Scheduling Admin")]
 
         public async Task<ActionResult<ShiftPatternDto>> Update(int id, [FromBody] CreateShiftPatternDto dto)
         {
@@ -63,7 +63,7 @@ namespace API.Controllers
 
         // 5. DELETE: api/shiftpatterns/{id}
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Scheduling Admin")]
 
         public async Task<IActionResult> Delete(int id)
         {

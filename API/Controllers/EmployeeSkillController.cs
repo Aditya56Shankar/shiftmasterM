@@ -8,7 +8,7 @@ using shiftmaster.models;
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/employeeskill")]
     public class EmployeeSkillController : ControllerBase
     {
         private readonly IEmployeeSkillService service;
@@ -21,7 +21,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "FrontLine Employee")]
         public async Task<IActionResult> AddSkill([FromBody] EmployeeSkillRequestDto request)
         {
             var entity = mapper.Map<EmployeeSkill>(request);

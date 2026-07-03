@@ -2,7 +2,7 @@
 using Domain.Enums;
 using Services.DTOs;
 using Services.Interfaces;
-using Services.Interfaces.Repositories;
+using Domain.Repositories;
 using shiftmaster.models;
 
 namespace Services.Implementation

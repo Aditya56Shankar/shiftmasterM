@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Domain.Enums;
 using Services.Interfaces;
-using Services.Interfaces.Repositories;
+using Domain.Repositories;
 using shiftmaster.models;
 
 namespace Services.Implementation

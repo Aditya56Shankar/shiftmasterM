@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Data.Context;
 using Domain.Enums;
-using Domain.Interfaces;
+using Domain.Repositories;
 using Domain.models;
 using Microsoft.EntityFrameworkCore;
 using Services.DTOs;
@@ -18,7 +18,6 @@ namespace Services.Implementation
     {
         private readonly IWorkLocationRepository _repository;
 
-        // Notice we inject the Repository here, NOT the DbContext!
         public WorkLocationService(IWorkLocationRepository repository)
         {
             _repository = repository;
@@ -88,8 +87,6 @@ namespace Services.Implementation
 
             _repository.Update(location);
             await _repository.SaveChangesAsync();
-
-            // Note: Fixed your incomplete mapping from the original snippet here
             return await GetLocationByIdAsync(location.LocationID);
         }
 
@@ -98,7 +95,6 @@ namespace Services.Implementation
             var location = await _repository.GetByIdAsync(id);
             if (location == null) return false;
 
-            // Business logic/protection check stays in the service layer!
             var hasLinkedUsers = await _repository.HasLinkedUsersAsync(id);
             if (hasLinkedUsers) throw new InvalidOperationException("Cannot delete location because employees are currently assigned to it.");
 
