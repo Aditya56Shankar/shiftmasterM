@@ -23,7 +23,6 @@ public class AttendanceService : IAttendanceService
         var clockIn = record.ClockIn;
         var clockOut = record.ClockOut;
 
-        // Work hours calculation
         if (clockIn.HasValue && clockOut.HasValue)
         {
             var totalMinutes = (clockOut.Value - clockIn.Value).TotalMinutes;

@@ -4,6 +4,7 @@ using Domain.Enums;
 using Domain.models;
 using Services.DTOs;
 using shiftmaster.models;
+using shiftMaster.Services.DTOs;
 using ShiftMaster.models;
 
 namespace Services.Mapper
@@ -18,6 +19,19 @@ namespace Services.Mapper
                 .ForMember(dest => dest.WeekEndDate, opt => opt.MapFrom(src => src.WeekStartDate.Date.AddDays(6)))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => RosterStatus.Draft))
                 .ForMember(dest => dest.PublishedDate, opt => opt.MapFrom(src => DateTime.UtcNow));
+
+
+            CreateMap<CreateAssignmentDto, ShiftAssignment>()
+                .ForMember(dest => dest.AssignedDate,
+                    opt => opt.MapFrom(src => src.AssignedDate.Date))
+                .ForMember(dest => dest.Status,
+                    opt => opt.Ignore());
+
+            CreateMap<ShiftAssignment, AssignmentResponseDto>()
+                .ForMember(dest => dest.Status,
+                    opt => opt.MapFrom(src => src.Status.ToString()));
+
+
 
             CreateMap<WeeklyRoster, RosterResponseDto>();
 

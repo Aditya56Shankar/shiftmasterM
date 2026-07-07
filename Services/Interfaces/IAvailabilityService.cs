@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Domain.Enums;
 using shiftmaster.models;
+using shiftMaster.Services.DTOs;
 
 namespace Services.Interfaces
 {
@@ -11,7 +12,10 @@ namespace Services.Interfaces
         Task<AvailabilitySubmission> AddAvailableAsync(AvailabilitySubmission avail);
         Task<AvailabilitySubmission> CheckAndUpdateAvailabilityAsync(ShiftAssignment assignment);
 
-        Task<bool> UpdateAvailabilityStatusAsync(int id, AvailabilityStatus status); 
+        Task<bool> UpdateAvailabilityStatusAsync(int id, AvailabilityStatus status);
+
+        Task<EmployeeScheduleDto> GetMyScheduleAsync(int userId);
+
 
     }
 

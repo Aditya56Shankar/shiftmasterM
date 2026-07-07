@@ -19,7 +19,7 @@ namespace shiftmaster.models
         public WorkLocation Location { get; set; }
 
         //[Required] 
-        public int? CreatedByID { get; set; }
+        public int CreatedByID { get; set; }
         public User CreatedBy { get; set; }
 
         [Required] 

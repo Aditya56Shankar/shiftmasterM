@@ -13,6 +13,11 @@ namespace Domain.Repositories
 
         Task<WeeklyRoster?> GetRosterByIdAsync(int id);
 
+        Task<bool> LocationExistsAsync(int locationId);
+        Task<bool> DepartmentExistsAsync(int departmentId);
+        Task<bool> UserExistsAsync(int userId);
+
+
         Task SaveAsync();
     }
 }

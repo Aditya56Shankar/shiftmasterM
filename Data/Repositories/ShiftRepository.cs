@@ -18,7 +18,13 @@ namespace Data.Repositories
         {
             _context = context;
         }
-
+        public async Task<List<ShiftAssignment>> GetByUserIdAsync(int userId)
+        {
+            return await _context.ShiftAssignments
+                .Where(s => s.UserID == userId)
+                .OrderBy(s => s.AssignedDate)
+                .ToListAsync();
+        }
         public async Task<ShiftAssignment> GetShiftWithDetailsAsync(int assignmentId)
         {
             return await _context.ShiftAssignments
@@ -66,6 +72,24 @@ namespace Data.Repositories
                 .Select(s => s.UserID)
                 .Distinct()
                 .CountAsync();
+        }
+        public async Task AddAsync(ShiftAssignment assignment)
+        {
+            await _context.ShiftAssignments.AddAsync(assignment);
+        }
+
+        public async Task<bool> ShiftExistsAsync(
+    int userId,
+    DateTime assignedDate,
+    TimeSpan startTime,
+    TimeSpan endTime)
+        {
+            return await _context.ShiftAssignments.AnyAsync(s =>
+                s.UserID == userId &&
+                s.AssignedDate.Date == assignedDate.Date &&
+                s.StartTime == startTime &&
+                s.EndTime == endTime &&
+                s.Status != ShiftAssignmentStatus.Cancelled);
         }
     }
 

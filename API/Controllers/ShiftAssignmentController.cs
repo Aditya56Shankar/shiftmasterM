@@ -1,14 +1,20 @@
-﻿using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 using AutoMapper;
 using Data.Context;
 using Domain.Enums;
+using Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Build.Framework;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Services.DTOs;
+using Services.Implementation.Exceptions;
 using Services.Interfaces;
 using shiftmaster.models;
+using shiftMaster.Services.DTOs;
 
 namespace API.Controllers
 {
@@ -18,41 +24,90 @@ namespace API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IRosterValidationService _validationService;
-        private readonly IMapper _mapper; 
+        private readonly IShiftRepository _shiftRepo;
+        private readonly IMapper _mapper;
+        private readonly ILogger<ShiftAssignmentController> _logger;
 
-        public ShiftAssignmentController(
-            ApplicationDbContext context,
-            IRosterValidationService validationService,
-            IMapper mapper)
+        public ShiftAssignmentController(IRosterValidationService validationService,IShiftRepository shiftRepo,ILogger<ShiftAssignmentController> logger,IMapper mapper)
         {
-            _context = context;
             _validationService = validationService;
+            _shiftRepo = shiftRepo;
+            _logger = logger;
             _mapper = mapper;
         }
 
+
         [HttpPost]
         [Authorize(Roles = "Shift Supervisor")]
-
-
-        public async Task<IActionResult> AssignShift([FromBody] CreateAssignmentDto dto)
+        public async Task<IActionResult> AssignShift(CreateAssignmentDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
 
-            var rosterExists = await _context.WeeklyRosters.AnyAsync(r => r.RosterID == dto.RosterID);
-            if (!rosterExists) return NotFound();
+                bool duplicateExists =
+                    await _shiftRepo.ShiftExistsAsync(
+                        dto.UserID,
+                        dto.AssignedDate,
+                        dto.StartTime,
+                        dto.EndTime);
 
-            var assignment = _mapper.Map<ShiftAssignment>(dto);
+                if (duplicateExists)
+                {
+                    return BadRequest(new
+                    {
+                        Message =
+                            $"Employee {dto.UserID} already has a shift assigned on " +
+                            $"{dto.AssignedDate:yyyy-MM-dd} from {dto.StartTime} to {dto.EndTime}."
+                    });
+                }
 
-            _context.ShiftAssignments.Add(assignment);
-            await _context.SaveChangesAsync();
+                var assignment = _mapper.Map<ShiftAssignment>(dto);
 
-            await _validationService.ValidateAssignmentConstraintsAsync(assignment.AssignmentID);
+                await _shiftRepo.AddAsync(assignment);
+                await _shiftRepo.SaveAsync();
 
-            var updatedAssignment = await _context.ShiftAssignments
-                .AsNoTracking()    
-                .FirstOrDefaultAsync(a => a.AssignmentID == assignment.AssignmentID);
+                await _validationService
+                    .ValidateAssignmentConstraintsAsync(
+                        assignment.AssignmentID);
 
-            return Ok(updatedAssignment);
+
+
+                var updatedAssignment =
+                    await _shiftRepo.GetShiftWithDetailsAsync(
+                        assignment.AssignmentID);
+
+                var response =
+                    _mapper.Map<AssignmentResponseDto>(
+                        updatedAssignment);
+
+                return Ok(response);
+
+
+            }
+            catch (InvalidWorkflowStateException ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.Message
+                });
+            }
+            catch (ResourceNotFoundException ex)
+            {
+                return NotFound(new
+                {
+                    Message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    Message = "An unexpected error occurred.",
+                    Error = ex.Message
+                });
+            }
         }
     }
 }

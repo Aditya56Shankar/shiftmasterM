@@ -20,17 +20,33 @@ namespace API.Controllers
             this.mapper = mapper;
         }
 
+
+
+
         [HttpPost]
         [Authorize(Roles = "FrontLine Employee")]
         public async Task<IActionResult> AddSkill([FromBody] EmployeeSkillRequestDto request)
         {
-            var entity = mapper.Map<EmployeeSkill>(request);
+            try
+            {
+                var entity = mapper.Map<EmployeeSkill>(request);
 
-            var saved = await service.AddEmployeeSkillAsync(entity);
+                var saved = await service.AddEmployeeSkillAsync(entity);
 
-            var response = mapper.Map<EmployeeSkillResponseDto>(saved);
+                var response = mapper.Map<EmployeeSkillResponseDto>(saved);
 
-            return Ok(response);
+                return Ok(response);
+            }
+
+
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.Message
+                });
+            }
+
         }
     }
 }

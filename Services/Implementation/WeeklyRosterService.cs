@@ -1,8 +1,10 @@
-﻿using AutoMapper;
+﻿using System.ComponentModel.DataAnnotations;
+using AutoMapper;
 using Domain.Enums;
-using Services.DTOs;
-using Services.Interfaces;
 using Domain.Repositories;
+using Services.DTOs;
+using Services.Implementation.Exceptions;
+using Services.Interfaces;
 using shiftmaster.models;
 
 namespace Services.Implementation
@@ -23,12 +25,26 @@ namespace Services.Implementation
             var roster = await repository.GetRosterByIdAsync(id);
 
             if (roster == null)
-                return false;
+            {
+
+                throw new Exception(
+                       $"Roster with ID {id} was not found.");
+
+            }
 
             action = action?.ToLower();
 
             if (action == "publish")
             {
+                var startOfCurrentWeek = DateTime.UtcNow.Date
+                    .AddDays(-(int)DateTime.UtcNow.DayOfWeek);
+
+                if (roster.WeekStartDate.Date < startOfCurrentWeek)
+                {
+                    throw new Exception(
+                        "Cannot publish rosters for previous weeks.");
+                }
+
                 roster.Status = RosterStatus.Published;
             }
             else if (action == "amend")
@@ -48,25 +64,58 @@ namespace Services.Implementation
 
         public async Task<WeeklyRoster> AddAsync(WeeklyRoster roster)
         {
-            var today = DateTime.UtcNow.Date;
 
-            // ✅ Business logic
-            roster.Status = today < roster.WeekStartDate
-                ? RosterStatus.Draft
-                : RosterStatus.Published;
+            if (roster.LocationID <= 0)
+                throw new ResourceNotFoundException("Invalid Location ID.");
+
+            if (roster.DepartmentID <= 0)
+                throw new ResourceNotFoundException("Invalid Department ID.");
+
+            if (roster.CreatedByID <= 0)
+                throw new ResourceNotFoundException("Invalid Created By User ID.");
+
+            var locationExists = await repository.LocationExistsAsync(roster.LocationID);
+            if (!locationExists)
+                throw new ResourceNotFoundException($"Location {roster.LocationID} does not exist.");
+
+            var departmentExists = await repository.DepartmentExistsAsync(roster.DepartmentID);
+            if (!departmentExists)
+                throw new ResourceNotFoundException(
+                    $"Department {roster.DepartmentID} does not exist.");
+
+            var userExists = await repository.UserExistsAsync(roster.CreatedByID);
+            if (!userExists)
+                throw new ResourceNotFoundException(
+                    $"User {roster.CreatedByID} does not exist.");
+
+            // Existing week validation
+            var startOfCurrentWeek = DateTime.UtcNow.Date
+                .AddDays(-(int)DateTime.UtcNow.DayOfWeek);
+
+            if (roster.WeekStartDate.Date < startOfCurrentWeek)
+            {
+                throw new InvalidWorkflowStateException(
+                    "Cannot create rosters for previous weeks.");
+            }
 
             await repository.AddAsync(roster);
             await repository.SaveAsync();
 
             return roster;
+
         }
 
         public async Task<SupervisorRosterResponseDto?> GetRosterAsync(int locationId, DateTime weekStartDate)
         {
             var roster = await repository.GetRosterEntityAsync(locationId, weekStartDate);
 
+
             if (roster == null)
-                return null;
+            {
+                throw new Exception(
+                    $"No roster found for Location ID {locationId} and Week Start Date {weekStartDate:yyyy-MM-dd}.");
+            }
+
 
             var shiftAssignments = roster.ShiftAssignments ?? new List<ShiftAssignment>();
 

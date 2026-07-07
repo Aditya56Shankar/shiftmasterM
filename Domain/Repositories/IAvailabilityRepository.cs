@@ -12,6 +12,8 @@ namespace Domain.Repositories
 
         Task<AvailabilitySubmission> GetWeeklyAvailabilityAsync(int userId, DateTime assignedDate);
 
+        Task<List<AvailabilitySubmission>> GetByUserIdAsync(int userId);
+
         Task<AvailabilitySubmission?> GetAvailabilityAsync(int userId, DateTime targetDate);
 
         Task SaveAsync();

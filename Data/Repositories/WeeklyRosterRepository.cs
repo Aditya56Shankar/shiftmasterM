@@ -20,6 +20,26 @@ namespace Data.Repositories
             return roster;
         }
 
+
+        public async Task<bool> LocationExistsAsync(int locationId)
+        {
+            return await db.WorkLocations
+                .AnyAsync(l => l.LocationID == locationId);
+        }
+
+        public async Task<bool> DepartmentExistsAsync(int departmentId)
+        {
+            return await db.Departments
+                .AnyAsync(d => d.departmentId == departmentId);
+        }
+
+        public async Task<bool> UserExistsAsync(int userId)
+        {
+            return await db.Users
+                .AnyAsync(u => u.UserID == userId);
+        }
+
+
         public async Task<WeeklyRoster?> GetRosterEntityAsync(int locationId, DateTime weekStartDate)
         {
             return await db.WeeklyRosters

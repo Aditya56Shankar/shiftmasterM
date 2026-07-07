@@ -21,19 +21,29 @@ namespace API.Controllers
             this.service = service;
         }
 
-        // ✅ POST: Add Availability
         [HttpPost]
         [Authorize(Roles = "FrontLine Employee")]
         public async Task<IActionResult> Availability([FromBody] AvailabilityRequestDto avail)
         {
-            var entity = mapper.Map<AvailabilitySubmission>(avail);
+            try
+            {
+                var entity = mapper.Map<AvailabilitySubmission>(avail);
 
-            var result = await service.AddAvailableAsync(entity);
+                var result = await service.AddAvailableAsync(entity);
 
-            return Ok(mapper.Map<AvailabilityResponseDto>(result));
+                return Ok(mapper.Map<AvailabilityResponseDto>(result));
+            }
+
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.Message
+                });
+            }
+
         }
 
-        // ✅ PUT: Update Status
         [HttpPut("{id}")]
         [Authorize(Roles = "Shift Supervisor")]
         public async Task<IActionResult> UpdateAvailabilityStatus(int id, [FromQuery] AvailabilityStatus status)
@@ -57,5 +67,34 @@ namespace API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+
+        [HttpGet]
+        [Authorize(Roles = "FrontLine Employee")]
+        public async Task<IActionResult> GetMySchedule()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst("nameid")?.Value;
+
+                if (string.IsNullOrEmpty(userIdClaim))
+                    return Unauthorized();
+
+                int userId = int.Parse(userIdClaim);
+
+                var result = await service.GetMyScheduleAsync(userId);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    Message = "An unexpected error occurred.",
+                    Error = ex.Message
+                });
+            }
+        }
+
     }
 }

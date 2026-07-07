@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Implementation;
+using Services.Implementation.Exceptions;
 using Services.Interfaces;
 using shiftmaster.models;
 
@@ -27,56 +28,92 @@ namespace API.Controllers
 
         }
 
-        // ✅ CREATE
         [HttpPost]
         [Authorize(Roles = "Shift Supervisor")]
         public async Task<IActionResult> CreateRoster([FromBody] CreateRosterDto dto)
         {
-            var entity = mapper.Map<WeeklyRoster>(dto);
+            try
+            {
+                var entity = mapper.Map<WeeklyRoster>(dto);
+                var result = await service.AddAsync(entity);
+                return Ok(mapper.Map<RosterResponseDto>(result));
+            }
 
-            var result = await service.AddAsync(entity);
+            catch (InvalidWorkflowStateException ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    Message = "An unexpected error occurred.",
+                    Error = ex.Message
+                });
+            }
 
-            return Ok(mapper.Map<RosterResponseDto>(result));
         }
 
-        // ✅ GET
         [HttpGet("{locationId:int}/{week}")]
         [Authorize(Roles = "Shift Supervisor,Admin")]
         public async Task<IActionResult> GetRoster(int locationId, string week)
         {
-            if (!DateTime.TryParse(week, out DateTime parsedDate))
-                return BadRequest("Invalid date format. Use YYYY-MM-DD");
+            try
+            {
+                if (!DateTime.TryParse(week, out DateTime parsedDate))
+                    return BadRequest("Invalid date format. Use YYYY-MM-DD");
 
-            var response = await service.GetRosterAsync(locationId, parsedDate);
+                var response = await service.GetRosterAsync(locationId, parsedDate);
 
-            if (response == null)
-                return NotFound("No roster found");
+                if (response == null)
+                    return NotFound("No roster found");
 
-            return Ok(response);
-        }
-
-        [Authorize(Roles = "Shift Supervisor")]
-
-        [HttpGet("{locationId:int}/employees/{date}")]
-        public async Task<IActionResult> GetEmployeesFull(int locationId, string date)
-        { 
-        
-            if (!DateTime.TryParse(date, out DateTime parsedDate))
-                return BadRequest("Invalid date format. Use YYYY-MM-DD");
-
-            var result = await _employeeService.GetEmployeesFullData(locationId, parsedDate);
-
-            if (result == null || !result.Any())
-                return NotFound("No employees found");
-
-            return Ok(result);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    Message = "An unexpected error occurred.",
+                    Error = ex.Message
+                });
+            }
         }
 
 
-        // ✅ UPDATE STATUS
-        [HttpPut("{id}/update-status")]
         [Authorize(Roles = "Shift Supervisor")]
-        public async Task<IActionResult> UpdateRosterStatus(int id, [FromQuery] string action)
+[HttpGet("{locationId:int}/employees/{date}")]
+public async Task<IActionResult> GetEmployeesFull(int locationId, string date)
+{
+    try
+    {
+        if (!DateTime.TryParse(date, out DateTime parsedDate))
+            return BadRequest("Invalid date format. Use YYYY-MM-DD");
+
+        var result = await _employeeService.GetEmployeesFullData(locationId, parsedDate);
+
+        if (result == null || !result.Any())
+            return NotFound("No employees found");
+
+        return Ok(result);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new
+        {
+            Message = "An unexpected error occurred.",
+            Error = ex.Message
+        });
+    }
+}
+
+
+        [HttpPut()]
+        [Authorize(Roles = "Supervisor")]
+        public async Task<IActionResult> UpdateRosterStatus([FromQuery] int id, [FromQuery] string action)
         {
             try
             {

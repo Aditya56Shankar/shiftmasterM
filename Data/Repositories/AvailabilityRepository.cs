@@ -24,14 +24,18 @@ public class AvailabilityRepository : IAvailabilityRepository
     }
 
 
-    public async Task<AvailabilitySubmission?> GetAvailabilityAsync(int userId, DateTime targetDate)
+    public async Task<AvailabilitySubmission?> GetAvailabilityAsync(
+    int userId,
+    DateTime targetDate)
     {
+        targetDate = targetDate.Date;
+
         return await db.AvailabilitySubmissions
             .FirstOrDefaultAsync(a =>
                 a.UserID == userId &&
-                a.WeekStartDate <= targetDate &&
-                a.WeekStartDate.AddDays(6) >= targetDate &&
-                a.Status == AvailabilityStatus.Submitted);
+                a.Status == AvailabilityStatus.Submitted &&
+                a.WeekStartDate.Date <= targetDate &&
+                a.WeekStartDate.Date.AddDays(6) >= targetDate);
     }
 
 
@@ -41,8 +45,17 @@ public class AvailabilityRepository : IAvailabilityRepository
         await db.SaveChangesAsync();
     }
 
-    public Task<AvailabilitySubmission> GetWeeklyAvailabilityAsync(int userId, DateTime assignedDate)
+    public async Task<List<AvailabilitySubmission>> GetByUserIdAsync(int userId)
     {
-        throw new NotImplementedException();
+        return await db.AvailabilitySubmissions
+            .Where(a => a.UserID == userId)
+            .OrderByDescending(a => a.WeekStartDate)
+            .ToListAsync();
+    }
+
+    public Task<AvailabilitySubmission?> GetWeeklyAvailabilityAsync(int userId, DateTime assignedDate)
+    {
+        return GetAvailabilityAsync(userId, assignedDate);
+
     }
 }

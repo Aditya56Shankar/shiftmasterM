@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Services.Interfaces;
 using Domain.Repositories;
 using shiftmaster.models;
+using Microsoft.Extensions.Logging;
+using Services.Implementation.Exceptions;
 
 namespace ShiftMaster.Application.Implementation
 {
@@ -18,7 +20,10 @@ namespace ShiftMaster.Application.Implementation
         private readonly IViolationRepository _violationRepo;
         private readonly IStatusCheckRepository _statusRepo;
         private readonly IAvailabilityRepository _availabilityRepo;
-       
+
+        private readonly ILogger<RosterValidationService> _logger;
+
+
 
 
         public RosterValidationService(
@@ -28,7 +33,8 @@ namespace ShiftMaster.Application.Implementation
             IViolationRepository violationRepo,
             IStatusCheckRepository statusRepo,
             IAvailabilityRepository availabilityRepo
-            )
+,
+            ILogger<RosterValidationService> logger)
         {
             _shiftRepo = shiftRepo;
             _leaveRepo = leaveRepo;
@@ -36,166 +42,291 @@ namespace ShiftMaster.Application.Implementation
             _violationRepo = violationRepo;
             _statusRepo = statusRepo;
             _availabilityRepo = availabilityRepo;
-            
+            _logger = logger;
         }
 
         public async Task ValidateAssignmentConstraintsAsync(int assignmentId)
         {
-            // Track violation state locally in-memory
+            
+
             bool hasBlockingViolation = false;
 
             var shift = await _shiftRepo.GetShiftWithDetailsAsync(assignmentId);
-            if (shift == null) return;
+
+            if (shift == null)
+            {
+                
+
+                throw new ResourceNotFoundException(
+                    $"Shift assignment with ID {assignmentId} was not found.");
+            }
 
             int rosterId = shift.RosterID;
             int userId = shift.UserID;
-
-
             DateTime targetDate = shift.AssignedDate.Date;
 
+            
 
             var weeklyShifts = (await _shiftRepo.GetWeeklyShiftsAsync(rosterId, userId))
                 .Where(s => s.Status != ShiftAssignmentStatus.Cancelled &&
-                            s.AssignmentID != assignmentId) // ✅ IMPORTANT
+                            s.AssignmentID != assignmentId)
                 .ToList();
 
+            bool duplicateShift = weeklyShifts.Any(s =>
+                s.AssignedDate.Date == shift.AssignedDate.Date &&
+                s.StartTime == shift.StartTime &&
+                s.EndTime == shift.EndTime);
+
+            if (duplicateShift)
+            {
+                
+
+                shift.Status = ShiftAssignmentStatus.Cancelled;
+
+                await _shiftRepo.SaveAsync();
+
+                throw new InvalidWorkflowStateException(
+                    $"Employee {userId} already has a shift assigned on {shift.AssignedDate:yyyy-MM-dd} from {shift.StartTime} to {shift.EndTime}.");
+            }
 
             var leaves = await _leaveRepo.GetActiveLeavesAsync(userId);
 
-            var skills = await _skillRepo.GetEmployeeSkillsAsync(userId)
-                         ?? new List<string>();
-
-            
-
-            // RULE 1: Leave
             if (HasLeaveConflict(leaves, targetDate))
             {
-                hasBlockingViolation = true; // 👈 Set flag
-                await AddViolation(rosterId, userId, ViolationType.UnavailableEmployee, SeverityLevel.Blocking);
+                hasBlockingViolation = true;
+
+                await AddViolation(
+                    rosterId,
+                    userId,
+                    ViolationType.UnavailableEmployee,
+                    SeverityLevel.Blocking);
+
+                shift.Status = ShiftAssignmentStatus.Cancelled;
+
+                await _violationRepo.SaveAsync();
+                await _shiftRepo.SaveAsync();
+
+                throw new InvalidWorkflowStateException(
+                    $"Employee {userId} is on approved leave on {targetDate:yyyy-MM-dd}.");
             }
+
+
+
+            var availability = await _availabilityRepo
+                .GetAvailabilityAsync(userId, targetDate);
+
+           
+
+            if (availability == null)
+            {
+
+                await AddViolation(
+                        rosterId,
+                        userId,
+                        ViolationType.UnavailableEmployee,
+                        SeverityLevel.Blocking);
+
+                shift.Status = ShiftAssignmentStatus.Cancelled;
+
+                await _violationRepo.SaveAsync();
+                await _shiftRepo.SaveAsync();
+
+                throw new ResourceNotFoundException(
+                    $"No availability submitted for employee {userId}.");
+
+            }
+
+            var assignedDay = targetDate.DayOfWeek.ToString();
 
             
 
-            // ✅ RULE 2: Combined Max Hours Rule
+            if (!availability.AvailableDays.Contains(assignedDay))
+            {
+                
 
-            // Step 1: calculate hours
+                await AddViolation(
+                    rosterId,
+                    userId,
+                    ViolationType.UnavailableEmployee,
+                    SeverityLevel.Blocking);
+
+                shift.Status = ShiftAssignmentStatus.Cancelled;
+
+                await _violationRepo.SaveAsync();
+                await _shiftRepo.SaveAsync();
+
+                throw new InvalidWorkflowStateException(
+                    $"Employee {userId} is not available on {assignedDay}.");
+            }
+
             double existingHours = CalculateWeeklyHours(weeklyShifts);
 
             var duration = shift.EndTime - shift.StartTime;
-            double newShiftHours = duration.TotalHours > 0
+
+            double newShiftHours =
+                duration.TotalHours > 0
                 ? duration.TotalHours
                 : duration.Add(TimeSpan.FromDays(1)).TotalHours;
 
             double totalHours = existingHours + newShiftHours;
 
-            // ✅ Fetch availability
-            var availability = await _availabilityRepo
-                .GetAvailabilityAsync(userId, targetDate);
 
-            // ✅ Rule A: User MaxHours check
-            double userMax = (double)(availability?.MaxHoursPerWeek ?? 40);
 
-            if (userMax > 48)
+            double userMax = (double)availability.MaxHoursPerWeek;
+
+            // Blocking violation (> 48 hours)
+            if (totalHours > 48)
             {
-
                 hasBlockingViolation = true;
 
-                await AddViolation(rosterId, userId,
+                await AddViolation(
+                    rosterId,
+                    userId,
                     ViolationType.MaxHoursExceeded,
                     SeverityLevel.Blocking);
 
-                // ✅ FORCE CANCEL ALL SHIFTS
-                var allShifts = await _shiftRepo.GetUserAssignmentsAsync(rosterId, userId);
+                var allShifts = await _shiftRepo
+                    .GetUserAssignmentsAsync(rosterId, userId);
 
-                foreach (var s in allShifts)
-                {
-                    s.Status = ShiftAssignmentStatus.Cancelled;
-                }
+         
+                    shift.Status = ShiftAssignmentStatus.Cancelled;
+                
 
                 await _shiftRepo.SaveAsync();
 
-                return;
-
+                throw new InvalidWorkflowStateException(
+                    $"Employee weekly hours ({totalHours}) exceed the hard limit of 48 hours.");
             }
 
-            // ✅ Rule B: Fixed limits
-            double maxHours = 40;
-            double hardLimit = 48;
-
-            if (totalHours > hardLimit)
+            // Warning violation (> 40 hours)
+            if (totalHours > 40)
             {
-                hasBlockingViolation = true;
-
-                await AddViolation(rosterId, userId,
-                    ViolationType.MaxHoursExceeded,
-                    SeverityLevel.Blocking);
-            }
-            else if (totalHours > maxHours)
-            {
-                await AddViolation(rosterId, userId,
+                await AddViolation(
+                    rosterId,
+                    userId,
                     ViolationType.MaxHoursExceeded,
                     SeverityLevel.Warning);
+
+                await _violationRepo.SaveAsync();
+
+                _logger.LogWarning(
+                    "Employee exceeded recommended weekly hours. UserId={UserId}, Hours={Hours}",
+                    userId,
+                    totalHours);
             }
-            // RULE 3: Rest
-            if (HasRestViolation(shift, weeklyShifts))
-            {
-                hasBlockingViolation = true; // 👈 Set flag
-                await AddViolation(rosterId, userId, ViolationType.InsufficientRest, SeverityLevel.Blocking);
-            }
 
 
-            bool hasSkill = HasRequiredSkill(skills, shift);
+            bool hasSkill = HasRequiredSkill(
+                await _skillRepo.GetEmployeeSkillsAsync(userId)
+                ?? new List<string>(),
+                shift);
 
-            Console.WriteLine($"Has skill result: {hasSkill}");
+
 
             if (!hasSkill)
             {
+                hasBlockingViolation = true;
 
-                hasBlockingViolation = true; 
+                await AddViolation(
+                    rosterId,
+                    userId,
+                    ViolationType.SkillGap,
+                    SeverityLevel.Blocking);
 
-    await AddViolation(rosterId, userId,
-        ViolationType.SkillGap,
-        SeverityLevel.Blocking);
+                shift.Status = ShiftAssignmentStatus.Cancelled;
 
+                await _violationRepo.SaveAsync();
+                await _shiftRepo.SaveAsync();
+
+                throw new ResourceNotFoundException(
+                    $"Employee {userId} does not possess the required skill '{shift.Role}'.");
             }
 
 
 
+            if (HasRestViolation(shift, weeklyShifts))
+            {
+                await AddViolation(
+                    rosterId,
+                    userId,
+                    ViolationType.InsufficientRest,
+                    SeverityLevel.Blocking);
 
+                shift.Status = ShiftAssignmentStatus.Cancelled;
+
+                await _violationRepo.SaveAsync();
+                await _shiftRepo.SaveAsync();
+
+                throw new InvalidWorkflowStateException(
+                    $"Insufficient rest period detected for employee {userId}. Minimum 11 hours rest is required between shifts.");
+            }
 
             await _violationRepo.SaveAsync();
 
-            // Check DB state
-            bool hasBlockingFromDb = await _violationRepo
-                .HasBlockingViolationAsync(rosterId, userId);
+            /* bool hasBlockingFromDb =
+                 await _violationRepo.HasBlockingViolationAsync(
+                     rosterId,
+                     userId);
 
-            bool hasBlocking = hasBlockingViolation || hasBlockingFromDb;
+             bool hasBlocking =
+                 hasBlockingViolation || hasBlockingFromDb;
 
-            if (hasBlocking)
+             if (hasBlocking)
+             {
+
+
+                 var allShifts =
+                     await _shiftRepo.GetUserAssignmentsAsync(
+                         rosterId,
+                         userId);
+
+                 foreach (var s in allShifts)
+                 {
+                     s.Status = ShiftAssignmentStatus.Cancelled;
+                 }
+
+                 await _shiftRepo.SaveAsync();
+             }*/
+
+
+            shift.Status = ShiftAssignmentStatus.Cancelled;
+
+            await _shiftRepo.SaveAsync();
+
+
+            if (shift.AssignedDate.Date < DateTime.Today)
             {
-                var allShifts = await _shiftRepo.GetUserAssignmentsAsync(rosterId, userId);
+                
 
-                foreach (var s in allShifts)
-                {
-                    s.Status = ShiftAssignmentStatus.Cancelled;
-                }
+                await AddViolation(
+                    rosterId,
+                    userId,
+                    ViolationType.InvalidRosterDate,
+                    SeverityLevel.Blocking);
+
+                shift.Status = ShiftAssignmentStatus.Cancelled;
 
                 await _shiftRepo.SaveAsync();
-            }
-            else
-            {
-                await UpdateShiftStatus(shift, userId, targetDate, false);
 
-                await _shiftRepo.SaveAsync();
+                throw new InvalidWorkflowStateException(
+                    $"Shift cannot be assigned for a past date ({shift.AssignedDate:yyyy-MM-dd}).");
             }
 
+            await UpdateShiftStatus(
+                shift,
+                userId,
+                targetDate,
+                false);
 
+            await _shiftRepo.SaveAsync();
 
-
+            _logger.LogInformation(
+                "Validation completed successfully. AssignmentId={AssignmentId}",
+                assignmentId);
         }
-        // ==========================================
-        // ✅ HELPER METHOD IMPLEMENTATIONS
-        // ==========================================
+
+
+
 
         private async Task AddViolation(int rosterId, int userId, ViolationType type, SeverityLevel severity)
         {
@@ -229,63 +360,65 @@ namespace ShiftMaster.Application.Implementation
             return total;
         }
 
-        private bool HasRestViolation(ShiftAssignment shift, List<ShiftAssignment> weeklyShifts)
+        private bool HasRestViolation( ShiftAssignment currentShift, List<ShiftAssignment> existingShifts)
         {
-            var targetDate = shift.AssignedDate.Date;
+            DateTime currentStart =
+                currentShift.AssignedDate.Date + currentShift.StartTime;
 
-            DateTime newStart = targetDate.Add(shift.StartTime);
-            DateTime newEnd = targetDate.Add(shift.EndTime);
+            DateTime currentEnd =
+                currentShift.AssignedDate.Date + currentShift.EndTime;
 
             // Handle overnight shifts
-            if (newEnd <= newStart)
-                newEnd = newEnd.AddDays(1);
-
-            foreach (var other in weeklyShifts)
+            if (currentEnd <= currentStart)
             {
-                if (other.AssignmentID == shift.AssignmentID)
-                    continue;
+                currentEnd = currentEnd.AddDays(1);
+            }
 
-                if (other.Status == ShiftAssignmentStatus.Cancelled)
-                    continue;
+            foreach (var shift in existingShifts)
+            {
+                DateTime existingStart =
+                    shift.AssignedDate.Date + shift.StartTime;
 
-                DateTime otherStart = other.AssignedDate.Date.Add(other.StartTime);
-                DateTime otherEnd = other.AssignedDate.Date.Add(other.EndTime);
+                DateTime existingEnd =
+                    shift.AssignedDate.Date + shift.EndTime;
 
-                if (otherEnd <= otherStart)
-                    otherEnd = otherEnd.AddDays(1);
-
-                // ✅ CASE 1: Overlap (including same time)
-                if (newStart < otherEnd && newEnd > otherStart)
+                if (existingEnd <= existingStart)
                 {
-                    return true; // ❌ Violation
+                    existingEnd = existingEnd.AddDays(1);
                 }
 
-                // ✅ CASE 2: Gap after other shift
-                double gapAfter = (newStart - otherEnd).TotalHours;
-
-                // ✅ CASE 3: Gap before other shift
-                double gapBefore = (otherStart - newEnd).TotalHours;
-
-                // ✅ 11-hour rule
-                if ((gapAfter > 0 && gapAfter < 11) ||
-                    (gapBefore > 0 && gapBefore < 11))
+                // Overlapping shifts
+                if (currentStart < existingEnd &&
+                    currentEnd > existingStart)
                 {
-                    return true; // ❌ Violation
+                    return true;
+                }
+
+                double restAfterExisting =
+                    (currentStart - existingEnd).TotalHours;
+
+                double restBeforeExisting =
+                    (existingStart - currentEnd).TotalHours;
+
+                if ((restAfterExisting >= 0 &&
+                     restAfterExisting < 11) ||
+                    (restBeforeExisting >= 0 &&
+                     restBeforeExisting < 11))
+                {
+                    return true;
                 }
             }
 
-            return false; // ✅ No violation
+            return false;
         }
 
 
         private bool HasRequiredSkill(List<string> skills, ShiftAssignment shift)
         {
-            // ✅ If no skills → invalid
 
             if (string.IsNullOrWhiteSpace(shift.Role))
                 return false;
 
-            // ✅ STRICT: must have EXACT match
             return skills != null &&
                    skills.Count > 0 &&
                    skills.Any(skill =>
@@ -296,14 +429,12 @@ namespace ShiftMaster.Application.Implementation
 
         private async Task UpdateShiftStatus(ShiftAssignment shift, int userId, DateTime targetDate, bool hasAnyViolation)
         {
-            // 1. If there is a blocking violation, cancel it immediately and stop.
             if (hasAnyViolation)
             {
                 shift.Status = ShiftAssignmentStatus.Cancelled;
                 return;
             }
 
-            // 2. If it's safe, figure out what specialized state it belongs to.
             if (await _statusRepo.IsCoveredAsync(userId))
             {
                 shift.Status = ShiftAssignmentStatus.Covered;
@@ -318,10 +449,8 @@ namespace ShiftMaster.Application.Implementation
             }
             else
             {
-                // 3. Default state if it's just a normal, valid shift.
                 shift.Status = ShiftAssignmentStatus.Assigned;
             }
         }
     }
 }
-    

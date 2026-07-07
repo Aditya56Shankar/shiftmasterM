@@ -23,11 +23,9 @@ namespace Services.Implementation
             if (leave == null)
                 return null;
 
-            // ✅ Business validation
             if (leave.EndDate < leave.StartDate)
                 throw new ArgumentException("End date cannot be earlier than start date");
 
-            // ✅ Business rules
             leave.Status = LeaveStatus.Active;
             leave.ApprovedByID = null;
 

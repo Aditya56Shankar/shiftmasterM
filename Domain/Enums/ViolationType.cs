@@ -29,7 +29,12 @@ namespace Domain.Enums
         InvalidSkillCoverage = 5,
         [Display(Name = "Invalid staff Coverage")]
         [Description("The collective shift assignment lacks the required structural staff .")]
-        UnderStaffed =6
+        UnderStaffed =6,
+
+
+        [Display(Name = "Invalid date assigned")]
+        [Description("The collective shift assignment date is past.")]
+        InvalidRosterDate =7
 
     }
 }
