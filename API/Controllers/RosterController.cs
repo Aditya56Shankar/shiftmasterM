@@ -46,11 +46,11 @@ namespace API.Controllers
                     Message = ex.Message
                 });
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
+            catch (ResourceNotFoundException ex)
+            { 
+                return StatusCode(404, new
                 {
-                    Message = "An unexpected error occurred.",
+                    Message = "resource not found",
                     Error = ex.Message
                 });
             }
