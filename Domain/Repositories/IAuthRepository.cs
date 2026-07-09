@@ -12,5 +12,7 @@ namespace Services.Interfaces.Repositories
         Task AddUserAsync(User user);
         Task<int?> GetUserIdByEmailAsync(string email);
         Task<User> GetUserWithDetailsByIdAsync(int id);
+        Task<bool> EmployeeIdExistsAsync(string employeeId);
+        Task UpdateUserAsync(User user);
     }
 }

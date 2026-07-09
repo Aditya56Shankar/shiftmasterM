@@ -14,7 +14,9 @@ namespace Services.DTOs
         [Required, EmailAddress, MaxLength(150)]
         public string Email { get; set; }
 
-        [Required, MinLength(6)]
+        // Inside Services.DTOs.RegisterDto
+
+        [Required(ErrorMessage = "Password is required.")]
         public string Password { get; set; }
 
         [Phone, MaxLength(20)]

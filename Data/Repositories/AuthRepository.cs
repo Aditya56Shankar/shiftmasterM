@@ -50,5 +50,14 @@ namespace Data.Repositories
                 .Include(u => u.Department)
                 .FirstOrDefaultAsync(u => u.UserID == id);
         }
+        public async Task<bool> EmployeeIdExistsAsync(string employeeId)
+        {
+            return await _context.Users.AnyAsync(u => u.EmployeeID == employeeId);
+        }
+        public async Task UpdateUserAsync(User user)
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+        }
     }
 }

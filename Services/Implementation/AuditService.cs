@@ -18,16 +18,7 @@ namespace Services.Implementation
             _logger = logger;
         }
 
-        public async Task LogLoginAttemptAsync(
-            int? userId,
-            bool isSuccess,
-            string ipAddress,
-            string userAgent,
-            string authMethod = "Password",
-            string correlationId = null,
-            string source = "Web",
-            string details = null,
-            string clientAppVersion = null)
+        public async Task LogLoginAttemptAsync(int? userId, bool isSuccess, string ipAddress, string userAgent, int statusCode, string authMethod = "Password", string correlationId = null, string source = "Web", string details = null, string clientAppVersion = null)
         {
             try
             {
@@ -41,6 +32,7 @@ namespace Services.Implementation
                     IsSuccess = isSuccess,
                     IPAddress = ipAddress,
                     UserAgent = userAgent,
+                    StatusCode = statusCode,
                     AuthMethod = authMethod,
                     CorrelationId = correlationId ?? GenerateCorrelationId(),
                     Source = source,
@@ -70,15 +62,7 @@ namespace Services.Implementation
             }
         }
 
-        public async Task LogRegistrationAsync(
-            int? userId,
-            bool isSuccess,
-            string ipAddress,
-            string userAgent,
-            string correlationId = null,
-            string source = "Web",
-            string details = null,
-            string clientAppVersion = null)
+        public async Task LogRegistrationAsync(int? userId, bool isSuccess, string ipAddress, string userAgent, int statusCode, string correlationId = null, string source = "Web", string details = null,string clientAppVersion = null)
         {
             try
             {
@@ -92,6 +76,7 @@ namespace Services.Implementation
                     IsSuccess = isSuccess,
                     IPAddress = ipAddress,
                     UserAgent = userAgent,
+                    StatusCode = statusCode,
                     AuthMethod = "SelfRegister",
                     CorrelationId = correlationId ?? GenerateCorrelationId(),
                     Source = source,
@@ -121,14 +106,7 @@ namespace Services.Implementation
             }
         }
 
-        public async Task LogAuditEventAsync(
-            string action,
-            string entityType,
-            int? recordId,
-            int? userId,
-            string ipAddress,
-            string userAgent,
-            string details = null)
+        public async Task LogAuditEventAsync(string action, string entityType, int? recordId, int? userId, string ipAddress, string userAgent, int statusCode, string details = null)
         {
             try
             {
@@ -139,30 +117,31 @@ namespace Services.Implementation
                     RecordID = recordId,
                     UserID = userId,
                     Timestamp = DateTime.UtcNow,
-                    IsSuccess = true,
+                    IsSuccess = statusCode >= 200 && statusCode <= 299,
                     IPAddress = ipAddress,
                     UserAgent = userAgent,
                     CorrelationId = GenerateCorrelationId(),
-                    Details = details
+                    Details = details,
+                    StatusCode = statusCode
                 };
 
                 // Delegated to the repository
                 await _auditRepository.AddAuditLogAsync(auditLog);
 
                 _logger.LogInformation(
-                    "Audit event logged: Action={Action}, EntityType={EntityType}, RecordId={RecordId}, UserId={UserId}",
+                    "Audit event logged: Action={Action}, EntityType={EntityType}, RecordId={RecordId}, UserId={UserId}, StatusCode={StatusCode}",
                     action,
                     entityType,
                     recordId,
-                    userId);
+                    userId, statusCode);
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Error while logging audit event: Action={Action}, EntityType={EntityType}",
+                    "Error while logging audit event: Action={Action}, EntityType={EntityType}, StatusCode={StatusCode}",
                     action,
-                    entityType);
+                    entityType, statusCode);
                 // Do not throw - audit log failures should not block the primary operation
             }
         }

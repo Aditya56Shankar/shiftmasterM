@@ -32,6 +32,10 @@ namespace ShiftMaster.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var ipAddress = GetClientIpAddress();
             var userAgent = GetUserAgent();
 
@@ -42,13 +46,13 @@ namespace ShiftMaster.Controllers
                 // Delegated to the user service
                 var userId = await _authService.GetUserIdByEmailAsync(dto.Email);
 
-                await _auditService.LogRegistrationAsync(userId, true, ipAddress, userAgent, "Web", "User registered successfully");
+                await _auditService.LogRegistrationAsync(userId, true, ipAddress, userAgent, statusCode: 200, "Web", "User registered successfully");
 
                 return Ok(new { message = result });
             }
             catch (Exception ex)
             {
-                await _auditService.LogRegistrationAsync(null, false, ipAddress, userAgent, "Web", ex.Message);
+                await _auditService.LogRegistrationAsync(null, false, ipAddress, userAgent, statusCode: 400, "Web", ex.Message);
                 return BadRequest(new { message = ex.Message });
             }
         }
@@ -70,13 +74,14 @@ namespace ShiftMaster.Controllers
                 // Delegated to the user service
                 var userId = await _authService.GetUserIdByEmailAsync(dto.Email);
 
-                await _auditService.LogLoginAttemptAsync(userId, true, ipAddress, userAgent, "Password", "Web", "Login successful");
+                await _auditService.LogLoginAttemptAsync(userId, true, ipAddress, userAgent, statusCode: 200, "Password", "Web", "Login successful");
 
                 return Ok(new { message = "Login successfully", token });
             }
             catch (Exception ex)
             {
-                await _auditService.LogLoginAttemptAsync(null, false, ipAddress, userAgent, "Password", "Web", ex.Message);
+                var failedAttemptUserId = await _authService.GetUserIdByEmailAsync(dto.Email);
+                await _auditService.LogLoginAttemptAsync(userId: failedAttemptUserId, isSuccess: false, ipAddress: ipAddress, userAgent: userAgent, statusCode: 400, authMethod: "Password", source: "Web", details: ex.Message);
                 return BadRequest(new { message = ex.Message });
             }
         }
