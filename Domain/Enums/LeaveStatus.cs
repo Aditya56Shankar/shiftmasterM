@@ -6,6 +6,8 @@ namespace Domain.Enums
 {
     public enum LeaveStatus
     {
-        Active, Cancelled
+        Pending,
+        Active,
+        Cancelled
     }
 }

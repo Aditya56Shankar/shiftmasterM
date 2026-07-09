@@ -6,6 +6,10 @@ namespace Domain.Enums
 {
     public enum TimesheetStatus
     {
-        Draft, Submitted, Approved, SentToPayroll
+        Draft,
+        Submitted,
+        SupervisorApproved,
+        HrApproved,
+        SentToPayroll
     }
 }

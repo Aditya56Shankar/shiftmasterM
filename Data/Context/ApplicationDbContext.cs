@@ -154,9 +154,21 @@ namespace Data.Context
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<TimesheetSummary>()
-                .HasOne(ts => ts.ApprovedBy)
+                .HasOne(ts => ts.SupervisorApprovedBy)
                 .WithMany()
-                .HasForeignKey(ts => ts.ApprovedByID)
+                .HasForeignKey(ts => ts.SupervisorApprovedByID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TimesheetSummary>()
+                .HasOne(ts => ts.HrApprovedBy)
+                .WithMany()
+                .HasForeignKey(ts => ts.HrApprovedByID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TimesheetSummary>()
+                .HasOne(ts => ts.PayrollProcessedBy)
+                .WithMany()
+                .HasForeignKey(ts => ts.PayrollProcessedByID)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // -- Prevent Cascade Delete on Roster Violations --

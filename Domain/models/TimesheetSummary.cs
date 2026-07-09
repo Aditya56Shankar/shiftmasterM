@@ -22,7 +22,13 @@ namespace shiftmaster.models
         public int UserID { get; set; }
         public User Employee { get; set; }
 
-        public int? ApprovedByID { get; set; }
-        public User ApprovedBy { get; set; }
+        public int? SupervisorApprovedByID { get; set; }
+        public User SupervisorApprovedBy { get; set; }
+
+        public int? HrApprovedByID { get; set; }
+        public User HrApprovedBy { get; set; }
+
+        public int? PayrollProcessedByID { get; set; }
+        public User PayrollProcessedBy { get; set; }
     }
 }
