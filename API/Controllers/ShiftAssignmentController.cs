@@ -1,14 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using AutoMapper;
-using Data.Context;
 using Domain.Enums;
 using Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Build.Framework;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Services.DTOs;
 using Services.Implementation.Exceptions;
@@ -22,13 +18,12 @@ namespace API.Controllers
     [ApiController]
     public class ShiftAssignmentController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
         private readonly IRosterValidationService _validationService;
         private readonly IShiftRepository _shiftRepo;
         private readonly IMapper _mapper;
         private readonly ILogger<ShiftAssignmentController> _logger;
 
-        public ShiftAssignmentController(IRosterValidationService validationService,IShiftRepository shiftRepo,ILogger<ShiftAssignmentController> logger,IMapper mapper)
+        public ShiftAssignmentController(IRosterValidationService validationService, IShiftRepository shiftRepo, ILogger<ShiftAssignmentController> logger, IMapper mapper)
         {
             _validationService = validationService;
             _shiftRepo = shiftRepo;
@@ -68,10 +63,18 @@ namespace API.Controllers
                 await _shiftRepo.AddAsync(assignment);
                 await _shiftRepo.SaveAsync();
 
-                await _validationService
-                    .ValidateAssignmentConstraintsAsync(
-                        assignment.AssignmentID);
-
+                try
+                {
+                    await _validationService
+                        .ValidateAssignmentConstraintsAsync(
+                            assignment.AssignmentID);
+                }
+                catch (InvalidWorkflowStateException ex)
+                {
+                    // Log validation failure but continue - assignment was created
+                    _logger.LogWarning($"Validation warning for assignment {assignment.AssignmentID}: {ex.Message}");
+                    throw;
+                }
 
 
                 var updatedAssignment =

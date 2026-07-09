@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
 using Services.Interfaces;
+using System.Security.Claims;
 using shiftmaster.models;
 
 namespace API.Controllers
@@ -33,12 +34,11 @@ namespace API.Controllers
 
                 return Ok(mapper.Map<AvailabilityResponseDto>(result));
             }
-
             catch (Exception ex)
             {
                 return BadRequest(new
                 {
-                    Message = ex.Message
+                    Message = "An error occurred while processing your availability request."
                 });
             }
 
@@ -75,7 +75,7 @@ namespace API.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst("nameid")?.Value;
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 if (string.IsNullOrEmpty(userIdClaim))
                     return Unauthorized();
