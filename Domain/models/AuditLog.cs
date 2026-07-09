@@ -13,6 +13,7 @@ namespace shiftmaster.models
         [Required] public DateTime Timestamp { get; set; }
         public int? UserID { get; set; } // Nullable for unauthenticated events (e.g., failed login)
         public User Actor { get; set; } // The user who performed the action
+        public int StatusCode { get; set; }
 
         // Authentication-specific fields
         public bool IsSuccess { get; set; } = true; // Indicates if the authentication attempt succeeded

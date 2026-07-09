@@ -14,6 +14,7 @@ namespace Services.Interfaces
             bool isSuccess,
             string ipAddress,
             string userAgent,
+            int statusCode,
             string authMethod = "Password",
             string correlationId = null,
             string source = "Web",
@@ -28,6 +29,7 @@ namespace Services.Interfaces
             bool isSuccess,
             string ipAddress,
             string userAgent,
+            int statusCode,
             string correlationId = null,
             string source = "Web",
             string details = null,
@@ -43,6 +45,7 @@ namespace Services.Interfaces
             int? userId,
             string ipAddress,
             string userAgent,
+            int statusCode,
             string details = null);
         // discussion, remember to add it here as well:
         // Task<IEnumerable<AuditLogDto>> GetAllAuditLogsAsync();

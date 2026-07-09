@@ -4,6 +4,8 @@ using System.Text;
 using AutoMapper;
 using Data.Context;
 using Data.Implementation;
+using Data.Repositories;
+using Domain.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
@@ -14,9 +16,8 @@ using NSwag.Generation.Processors.Security;
 using Services.Implementation;
 using Services.Interfaces;
 using Services.Interfaces.Repositories;
-using Domain.Repositories;
-using Data.Repositories;
 using Services.Mapper;
+using shiftMaster.API.Middlewares;
 using ShiftMaster.Application.Implementation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -149,6 +150,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<GlobalAuditMiddleware>();
 
 app.MapControllers();
 

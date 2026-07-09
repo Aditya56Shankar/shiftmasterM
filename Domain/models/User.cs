@@ -18,6 +18,8 @@ namespace ShiftMaster.models
         [Required] public string PasswordHash { get; set; }
         [Phone, MaxLength(20)] public string Phone { get; set; }
         [Required] public UserStatus Status { get; set; }
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiryTime { get; set; }
 
         // Foreign Keys
         [Required] public int LocationID { get; set; }

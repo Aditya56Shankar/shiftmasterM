@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +13,7 @@ using Services.DTOs;
 using Services.Interfaces;
 using Services.Interfaces.Repositories;
 using ShiftMaster.models;
+using YamlDotNet.Core.Tokens;
 
 namespace Services.Implementation
 {
@@ -30,7 +33,13 @@ namespace Services.Implementation
             // Replaced _context check with repository method
             if (await _authRepository.EmailExistsAsync(dto.Email))
                 throw new Exception("Email is already registered.");
-
+            if (await _authRepository.EmployeeIdExistsAsync(dto.EmployeeID))
+                throw new Exception("The Employee id has already been registered. So login with that user credentials.");
+            var passwordPattern = @"^(?=.*[a-zA-Z0-9])(?=.*[^a-zA-Z0-9]).{6,}$";
+            if (!Regex.IsMatch(dto.Password, passwordPattern))
+            {
+                throw new Exception("Password doesn't meet requirements. It should consists of alphanumeric, symbols and it should be minimum length of 6 characters.");
+            }
             var user = new User
             {
                 EmployeeID = dto.EmployeeID,
@@ -50,14 +59,31 @@ namespace Services.Implementation
             return "User registered successfully.";
         }
 
-        public async Task<string> LoginAsync(LoginDto dto)
+        public async Task<Object> LoginAsync(LoginDto dto)
         {
             var user = await _authRepository.GetUserByEmailWithRoleAsync(dto.Email);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 throw new Exception("Invalid email or password.");
 
-            return GenerateJwtToken(user);
+            var token = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // Valid for 7 days
+
+            // You need to add this method to your AuthRepository to save changes
+            await _authRepository.UpdateUserAsync(user);
+
+            return new { token, refreshToken };
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
         }
 
         private string GenerateJwtToken(User user)
