@@ -8,142 +8,195 @@ using shiftmaster.models;
 
 namespace Services.Implementation
 {
-	public class ShiftSwapService : IShiftSwapService
-	{
-		private readonly IShiftSwapRepository _repository;
-		private readonly IMapper _mapper;
+    public class ShiftSwapService : IShiftSwapService
+    {
+        private readonly IShiftSwapRepository _repository;
+        private readonly IMapper _mapper;
 
-		public ShiftSwapService(IShiftSwapRepository repository, IMapper mapper)
-		{
-			_repository = repository;
-			_mapper = mapper;
-		}
+        public ShiftSwapService(IShiftSwapRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
 
-		public async Task<List<SwapEligibilityDto>> GetEligibleSwapTargetsAsync(int shiftAssignmentId)
-		{
-			// Load the requesting shift assignment
-			var requesterAssignment = await _repository.GetShiftAssignmentWithRosterAsync(shiftAssignmentId);
+        public async Task<List<SwapEligibilityDto>> GetEligibleSwapTargetsAsync(int shiftAssignmentId)
+        {
+            // Load the requesting shift assignment
+            var requesterAssignment = await _repository.GetShiftAssignmentWithRosterAsync(shiftAssignmentId);
 
-			if (requesterAssignment == null)
-			{
-				return new List<SwapEligibilityDto>();
-			}
+            if (requesterAssignment == null)
+            {
+                throw new ResourceNotFoundException($"Shift assignment with ID {shiftAssignmentId} not found.");
+            }
 
-			var requesterId = requesterAssignment.UserID;
-			var assignedDate = requesterAssignment.AssignedDate;
-			var locationId = requesterAssignment.Roster.LocationID;
-			var rosterWeekStart = requesterAssignment.Roster.WeekStartDate;
-			var rosterWeekEnd = requesterAssignment.Roster.WeekEndDate;
+            if (requesterAssignment == null)
+            {
+                return new List<SwapEligibilityDto>();
+            }
 
-			// Get all active users at the same location and department, excluding the requester
-			var departmentId = requesterAssignment.Roster.DepartmentID;
-			var potentialTargets = await _repository.GetActiveUsersByLocationAndDepartmentExceptAsync(locationId, departmentId, requesterId);
+            var requesterId = requesterAssignment.UserID;
+            var assignedDate = requesterAssignment.AssignedDate;
+            var locationId = requesterAssignment.Roster.LocationID;
+            var rosterWeekStart = requesterAssignment.Roster.WeekStartDate;
+            var rosterWeekEnd = requesterAssignment.Roster.WeekEndDate;
 
-			var eligibleTargets = new List<SwapEligibilityDto>();
+            // Get all active users at the same location and department, excluding the requester
+            var departmentId = requesterAssignment.Roster.DepartmentID;
+            var potentialTargets = await _repository.GetActiveUsersByLocationAndDepartmentExceptAsync(locationId, departmentId, requesterId);
 
-			foreach (var user in potentialTargets)
-			{
-				// Check if user has an approved leave block on the requester's assigned date
-				var hasLeaveBlock = await _repository.HasApprovedLeaveBlockOnDateAsync(user.UserID, assignedDate);
+            var eligibleTargets = new List<SwapEligibilityDto>();
 
-				if (hasLeaveBlock)
-					continue;
+            foreach (var user in potentialTargets)
+            {
+                // Check if user has an approved leave block on the requester's assigned date
+                var hasLeaveBlock = await _repository.HasApprovedLeaveBlockOnDateAsync(user.UserID, assignedDate);
 
-				// Find any shift assignment this user has in the same roster week
-				var targetAssignment = await _repository.GetUserAssignmentInWeekAsync(user.UserID, rosterWeekStart, rosterWeekEnd, assignedDate);
+                if (hasLeaveBlock)
+                    continue;
 
-				eligibleTargets.Add(new SwapEligibilityDto
-				{
-					UserID = user.UserID,
-					EmployeeID = user.EmployeeID,
-					Name = user.Name,
-					AvailableAssignmentID = targetAssignment?.AssignmentID
-				});
-			}
+                // Changed: fetch all assignments in week (excluding same day)
+                var targetAssignments = await _repository.GetUserAssignmentsInWeekAsync(user.UserID, rosterWeekStart, rosterWeekEnd, assignedDate);
 
-			return eligibleTargets;
-		}
+                var assignmentOptions = targetAssignments
+                    .Select(a => new SwapAssignmentOptionDto
+                    {
+                        AssignmentID = a.AssignmentID,
+                        AssignedDate = a.AssignedDate.Date
+                    })
+                    .ToList();
 
-		public async Task<SwapRequestResponseDto> CreateSwapRequestAsync(CreateSwapRequestDto dto)
-		{
-			var swapRequest = _mapper.Map<SwapRequest>(dto);
+                eligibleTargets.Add(new SwapEligibilityDto
+                {
+                    UserID = user.UserID,
+                    EmployeeID = user.EmployeeID,
+                    Name = user.Name,
+                    AvailableAssignments = assignmentOptions
+                });
+            }
 
-			await _repository.AddSwapRequestAsync(swapRequest);
+            return eligibleTargets;
+        }
 
-			return _mapper.Map<SwapRequestResponseDto>(swapRequest);
-		}
+        public async Task<SwapRequestResponseDto> CreateSwapRequestAsync(CreateSwapRequestDto dto, int actorUserId)
+        {
+            var requesterAssignment = await _repository.GetShiftAssignmentByIdAsync(dto.OriginalAssignmentID);
+            if (requesterAssignment == null)
+                throw new ResourceNotFoundException($"Original assignment with ID {dto.OriginalAssignmentID} not found.");
 
-		public async Task<SwapRequestResponseDto> RespondToSwapAsync(int swapId, bool accepted)
-		{
-			var swapRequest = await _repository.GetSwapRequestByIdAsync(swapId);
+            if (requesterAssignment.UserID != actorUserId)
+                throw new InvalidWorkflowStateException("Requester does not own the original assignment.");
 
-			if (swapRequest == null)
-			{
-				throw new ResourceNotFoundException($"Swap request with ID {swapId} not found.");
-			}
+            if (!dto.ProposedAssignmentID.HasValue)
+                throw new InvalidWorkflowStateException("ProposedAssignmentID is required for swap request.");
 
-			if (swapRequest.Status != ApprovalStatus.Pending)
-			{
-				throw new InvalidWorkflowStateException("Swap request is not in pending state.");
-			}
+            var targetAssignment = await _repository.GetShiftAssignmentByIdAsync(dto.ProposedAssignmentID.Value);
+            if (targetAssignment == null)
+                throw new ResourceNotFoundException($"Proposed assignment with ID {dto.ProposedAssignmentID.Value} not found.");
 
-			swapRequest.Status = accepted ? ApprovalStatus.Approved : ApprovalStatus.Rejected;
-			await _repository.SaveChangesAsync();
+            if (targetAssignment.UserID != dto.TargetUserID)
+                throw new InvalidWorkflowStateException("Target user does not own the proposed assignment.");
 
-			return _mapper.Map<SwapRequestResponseDto>(swapRequest);
-		}
+            if (targetAssignment.AssignmentID == requesterAssignment.AssignmentID)
+                throw new InvalidWorkflowStateException("Original and proposed assignments cannot be the same.");
 
-		public async Task<SwapRequestResponseDto> ApproveSwapAsync(int swapId, int approvedById, bool approved)
-		{
-			var swapRequest = await _repository.GetSwapRequestByIdAsync(swapId);
+            var swapRequest = _mapper.Map<SwapRequest>(dto);
+            swapRequest.RequesterUserID = actorUserId;
 
-			if (swapRequest == null)
-			{
-				throw new ResourceNotFoundException($"Swap request with ID {swapId} not found.");
-			}
+            await _repository.AddSwapRequestAsync(swapRequest);
+            return _mapper.Map<SwapRequestResponseDto>(swapRequest);
+        }
 
-			if (swapRequest.Status != ApprovalStatus.Approved)
-			{
-				throw new InvalidWorkflowStateException("Swap request is not in approved (peer-accepted) state.");
-			}
+        public async Task<SwapRequestResponseDto> RespondToSwapAsync(int swapId, bool accepted,int actorUserId)
+        {
+            var swapRequest = await _repository.GetSwapRequestByIdAsync(swapId);
 
-			if (approved)
-			{
-				// Load both assignments
-				var originalAssignment = await _repository.GetShiftAssignmentByIdAsync(swapRequest.OriginalAssignmentID);
+            if (swapRequest == null)
+            {
+                throw new ResourceNotFoundException($"Swap request with ID {swapId} not found.");
+            }
 
-				var proposedAssignment = swapRequest.ProposedAssignmentID.HasValue
-					? await _repository.GetShiftAssignmentByIdAsync(swapRequest.ProposedAssignmentID.Value)
-					: null;
+            if(swapRequest.TargetUserID != actorUserId)
+            {
+                throw new InvalidWorkflowStateException("You are not allowed to do this transaction");
+            }
 
-				if (originalAssignment == null)
-				{
-					throw new ResourceNotFoundException($"Original assignment with ID {swapRequest.OriginalAssignmentID} not found.");
-				}
+            if (swapRequest.ProposedAssignmentID.HasValue)
+            {
+                var shiftDetails = await _repository.GetShiftAssignmentByIdAsync(swapRequest.ProposedAssignmentID.Value);
 
-				if (proposedAssignment == null)
-				{
-					throw new ResourceNotFoundException("Proposed assignment was not found for this swap request.");
-				}
+                if(shiftDetails == null)
+                {
+                    throw new ResourceNotFoundException("Proposed assignment is not found");
+                }
 
-				// Swap the UserIDs
-				(originalAssignment.UserID, proposedAssignment.UserID) = (proposedAssignment.UserID, originalAssignment.UserID);
+                if (shiftDetails.UserID != actorUserId)
+                {
+                    throw new InvalidWorkflowStateException("You are not authorized to accept the swap request.");
+                }
+            }
 
-				// Set both to Swapped status
-				originalAssignment.Status = ShiftAssignmentStatus.Swapped;
-				proposedAssignment.Status = ShiftAssignmentStatus.Swapped;
+            if (swapRequest.Status != ApprovalStatus.Pending)
+            {
+                throw new InvalidWorkflowStateException("Swap request is not in pending state.");
+            }
 
-				swapRequest.Status = ApprovalStatus.Completed;
-				swapRequest.ApprovedByID = approvedById;
-			}
-			else
-			{
-				swapRequest.Status = ApprovalStatus.Rejected;
-			}
+            swapRequest.Status = accepted ? ApprovalStatus.Approved : ApprovalStatus.Rejected;
+            await _repository.SaveChangesAsync();
 
-			await _repository.SaveChangesAsync();
+            return _mapper.Map<SwapRequestResponseDto>(swapRequest);
+        }
 
-			return _mapper.Map<SwapRequestResponseDto>(swapRequest);
-		}
-	}
+        public async Task<SwapRequestResponseDto> ApproveSwapAsync(int swapId, int approvedById, bool approved)
+        {
+            var swapRequest = await _repository.GetSwapRequestByIdAsync(swapId);
+
+            if (swapRequest == null)
+            {
+                throw new ResourceNotFoundException($"Swap request with ID {swapId} not found.");
+            }
+
+            if (swapRequest.Status != ApprovalStatus.Approved)
+            {
+                throw new InvalidWorkflowStateException("Swap request is not in approved (peer-accepted) state.");
+            }
+
+            if (approved)
+            {
+                // Load both assignments
+                var originalAssignment = await _repository.GetShiftAssignmentByIdAsync(swapRequest.OriginalAssignmentID);
+
+                var proposedAssignment = swapRequest.ProposedAssignmentID.HasValue
+                    ? await _repository.GetShiftAssignmentByIdAsync(swapRequest.ProposedAssignmentID.Value)
+                    : null;
+
+                if (originalAssignment == null)
+                {
+                    throw new ResourceNotFoundException($"Original assignment with ID {swapRequest.OriginalAssignmentID} not found.");
+                }
+
+                if (proposedAssignment == null)
+                {
+                    throw new ResourceNotFoundException("Proposed assignment was not found for this swap request.");
+                }
+
+                // Swap the UserIDs
+                (originalAssignment.UserID, proposedAssignment.UserID) = (proposedAssignment.UserID, originalAssignment.UserID);
+
+                // Set both to Swapped status
+                originalAssignment.Status = ShiftAssignmentStatus.Swapped;
+                proposedAssignment.Status = ShiftAssignmentStatus.Swapped;
+
+                swapRequest.Status = ApprovalStatus.Completed;
+                swapRequest.ApprovedByID = approvedById;
+            }
+            else
+            {
+                swapRequest.Status = ApprovalStatus.Rejected;
+            }
+
+            await _repository.SaveChangesAsync();
+
+            return _mapper.Map<SwapRequestResponseDto>(swapRequest);
+        }
+    }
 }

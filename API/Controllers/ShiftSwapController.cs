@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Services.DTOs;
@@ -21,9 +22,16 @@ namespace API.Controllers
 		[Authorize(Roles = "FrontLine Employee")]
 		public async Task<IActionResult> GetEligibleSwapTargets([FromQuery] int shiftAssignmentId)
 		{
-			var eligibleTargets = await _service.GetEligibleSwapTargetsAsync(shiftAssignmentId);
-			return Ok(eligibleTargets);
-		}
+            try
+            {
+                var eligibleTargets = await _service.GetEligibleSwapTargetsAsync(shiftAssignmentId);
+                return Ok(eligibleTargets);
+            }
+            catch (ResourceNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
 
 		[HttpPost("request")]
 		[Authorize(Roles = "FrontLine Employee")]
@@ -33,9 +41,25 @@ namespace API.Controllers
 			{
 				return BadRequest(ModelState);
 			}
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var actorUserId))
+            {
+                return Unauthorized("Invalid user.");
+            }
 
-			var swapRequest = await _service.CreateSwapRequestAsync(dto);
-			return CreatedAtAction(nameof(CreateSwapRequest), swapRequest);
+			try
+			{
+				var swapRequest = await _service.CreateSwapRequestAsync(dto, actorUserId);
+				return CreatedAtAction(nameof(CreateSwapRequest), swapRequest);
+			}
+			catch (ResourceNotFoundException ex)
+			{
+				return NotFound(ex.Message);
+			}
+			catch (InvalidWorkflowStateException ex)
+			{
+				return BadRequest(ex.Message);
+			}
 		}
 
 		[HttpPut("{swapId}/respond")]
@@ -46,10 +70,14 @@ namespace API.Controllers
 			{
 				return BadRequest(ModelState);
 			}
-
-			try
+            var userIdClaim = User.FindFirst("nameid")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var actorUserId))
+            {
+                return Unauthorized("Invalid user.");
+            }
+            try
 			{
-				var swapRequest = await _service.RespondToSwapAsync(swapId, dto.Accepted);
+				var swapRequest = await _service.RespondToSwapAsync(swapId, dto.Accepted, actorUserId);
 				return Ok(swapRequest);
 			}
 			catch (ResourceNotFoundException ex)
@@ -70,10 +98,14 @@ namespace API.Controllers
 			{
 				return BadRequest(ModelState);
 			}
-
-			try
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var actorUserId))
+            {
+                return Unauthorized("Invalid user.");
+            }
+            try
 			{
-				var swapRequest = await _service.ApproveSwapAsync(swapId, dto.ApprovedByID, dto.Approved);
+				var swapRequest = await _service.ApproveSwapAsync(swapId, actorUserId, dto.Approved);
 				return Ok(swapRequest);
 			}
 			catch (ResourceNotFoundException ex)

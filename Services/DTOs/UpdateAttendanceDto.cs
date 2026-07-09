@@ -1,22 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Services.DTOs
 {
-
-    public class CreateAttendanceDto
+    public class UpdateAttendanceDto
     {
-        [Range(1, int.MaxValue)]
-        public int AssignmentID { get; set; }
-
-        public DateTime WorkDate { get; set; }
         public DateTime? ClockIn { get; set; }
         public DateTime? ClockOut { get; set; }
 
         [Range(0, 1440)]
         public int BreakMinutesTaken { get; set; }
     }
-
 }
