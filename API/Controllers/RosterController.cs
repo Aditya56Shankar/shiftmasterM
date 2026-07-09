@@ -112,14 +112,14 @@ public async Task<IActionResult> GetEmployeesFull(int locationId, string date)
 
 
         [HttpPut()]
-        [Authorize(Roles = "Supervisor")]
+        [Authorize(Roles = "Shift Supervisor")]
         public async Task<IActionResult> UpdateRosterStatus([FromQuery] int id, [FromQuery] string action)
         {
             try
             {
 
 
-                var userIdClaim = User.FindFirst("nameid")?.Value;
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
                 if (string.IsNullOrEmpty(userIdClaim))
                     return Unauthorized("User ID not found");
