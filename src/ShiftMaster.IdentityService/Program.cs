@@ -15,31 +15,45 @@ using ShiftMaster.IdentityService.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// =========================================================================
 // 1. DATABASE CONNECTION CONFIGURATION
+// =========================================================================
 builder.Services.AddDbContext<IdentityDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
+// =========================================================================
 // 2. REPOSITORIES
+// =========================================================================
 builder.Services.AddScoped<IWorkLocationRepository, WorkLocationRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 
-// 3. SERVICES
+// =========================================================================
+// 3. SERVICES & HTTP CLIENTS (WITH INTERCEPTING TOKEN FORWARDING)
+// =========================================================================
 builder.Services.AddScoped<IWorkLocationService, WorkLocationService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+// Infrastructure for extracting and attaching the active JWT across requests
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<TokenForwardingHandler>();
+
 // Register HttpAuditService calling the Comms Audit Service
 builder.Services.AddHttpClient<IAuditService, HttpAuditService>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:CommsAuditService"] ?? "http://localhost:5005/");
-});
+    // FIXED: Changed fallback port to match the active local HTTPS topology (64099)
+    client.BaseAddress = new Uri(builder.Configuration["Services:CommsAuditService"] ?? "https://localhost:64099/");
+})
+.AddHttpMessageHandler<TokenForwardingHandler>(); // Attaches the JWT during background API execution loops
 
+// =========================================================================
 // 4. CONTROLLERS, JSON, & AUTOMAPPER CONFIGURATION
+// =========================================================================
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -53,7 +67,9 @@ builder.Services.AddAutoMapper(cfg =>
     cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
 });
 
+// =========================================================================
 // 5. JWT AUTHENTICATION
+// =========================================================================
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "superSecretKeyShiftMaster123!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -72,7 +88,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// 6. OPENAPI / NSWAG
+// =========================================================================
+// 6. OPENAPI / NSWAG DOCUMENTATION
+// =========================================================================
 builder.Services.AddOpenApiDocument(document =>
 {
     document.Title = "ShiftMaster Identity Service API";
@@ -98,10 +116,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 // Ensure DB is initialized
