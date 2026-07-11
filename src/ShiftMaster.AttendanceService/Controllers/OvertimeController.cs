@@ -2,9 +2,9 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.AttendanceService.DTOs;
-using ShiftMaster.AttendanceService.Exceptions;
-using ShiftMaster.AttendanceService.Services;
+using ShiftMaster.AttendanceService.Applications.DTOs;
+using ShiftMaster.AttendanceService.Applications.Exceptions;
+using ShiftMaster.AttendanceService.Applications.Interfaces;
 
 namespace ShiftMaster.AttendanceService.Controllers
 {

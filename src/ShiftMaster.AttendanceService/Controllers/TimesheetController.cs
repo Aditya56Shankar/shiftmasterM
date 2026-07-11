@@ -5,11 +5,10 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.AttendanceService.DTOs;
-using ShiftMaster.AttendanceService.Models;
-using ShiftMaster.AttendanceService.Enums;
-using ShiftMaster.AttendanceService.Exceptions;
-using ShiftMaster.AttendanceService.Services;
+using ShiftMaster.AttendanceService.Applications.Interfaces;
+using ShiftMaster.AttendanceService.Domain.Enums;
+using ShiftMaster.AttendanceService.Applications.Exceptions;
+using ShiftMaster.AttendanceService.Applications.DTOs;
 
 namespace ShiftMaster.AttendanceService.Controllers
 {

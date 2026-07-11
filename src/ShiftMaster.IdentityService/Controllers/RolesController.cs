@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.IdentityService.DTOs;
-using ShiftMaster.IdentityService.Services;
+using ShiftMaster.IdentityService.Application.DTOs;
+using ShiftMaster.IdentityService.Application.Interfaces;
 
 namespace ShiftMaster.IdentityService.Controllers
 {

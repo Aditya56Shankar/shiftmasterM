@@ -2,8 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.CommsAuditService.DTOs;
-using ShiftMaster.CommsAuditService.Services;
+using ShiftMaster.CommsAuditService.Application.Interfaces;
 
 namespace ShiftMaster.CommsAuditService.Controllers
 {

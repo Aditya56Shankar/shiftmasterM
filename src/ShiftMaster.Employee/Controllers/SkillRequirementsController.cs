@@ -1,9 +1,11 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.Employee.DTOs;
-using ShiftMaster.Employee.Services;
+using ShiftMaster.Employee.Application.DTOs;
+using ShiftMaster.Employee.Application.Interfaces;
+using ShiftMaster.Employee.Domain.Enums;
+using ShiftMaster.Employee.Infrastructure.Data;
 
 namespace ShiftMaster.Employee.Controllers
 {
@@ -63,10 +65,10 @@ namespace ShiftMaster.Employee.Controllers
         }
 
         [HttpGet("internal/skills")]
-        public async Task<IActionResult> GetRequiredSkillsInternal([FromQuery] int locationId, [FromQuery] int departmentId, [FromServices] Data.EmployeeDbContext dbContext)
+        public async Task<IActionResult> GetRequiredSkillsInternal([FromQuery] int locationId, [FromQuery] int departmentId, [FromServices] EmployeeDbContext dbContext)
         {
             var skills = await dbContext.SkillRequirements
-                .Where(sr => sr.LocationID == locationId && sr.DepartmentID == departmentId && sr.Status == Enums.ActiveStatus.Active)
+                .Where(sr => sr.LocationID == locationId && sr.DepartmentID == departmentId && sr.Status == ActiveStatus.Active)
                 .Select(sr => sr.SkillName)
                 .ToListAsync();
             return Ok(skills);

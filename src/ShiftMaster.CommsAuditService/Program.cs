@@ -8,18 +8,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using NSwag.Generation.Processors.Security;
-using ShiftMaster.CommsAuditService.Data;
-using ShiftMaster.CommsAuditService.Repositories;
-using ShiftMaster.CommsAuditService.Services;
 using ShiftMaster.CommsAuditService.Clients;
-using ShiftMaster.CommsAuditService.Mappers;
+using ShiftMaster.CommsAuditService.Application.Services;
+using ShiftMaster.CommsAuditService.Application.Interfaces;
+using ShiftMaster.CommsAuditService.Infrastructure.Data;
+using ShiftMaster.CommsAuditService.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. DATABASE CONNECTION & DB CONTEXT FACTORY CONFIGURATION
-builder.Services.AddDbContext<CommsAuditDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
 builder.Services.AddDbContextFactory<CommsAuditDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
@@ -29,10 +26,14 @@ builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 
 // 3. HTTP CLIENTS
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<TokenForwardingHandler>();
+
 builder.Services.AddHttpClient<IIdentityClient, IdentityClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:IdentityService"] ?? "http://localhost:5001/");
-});
+    client.BaseAddress = new Uri(builder.Configuration["Services:IdentityService"] ?? "https://localhost:64101/");
+})
+.AddHttpMessageHandler<TokenForwardingHandler>();
 
 // 4. SERVICES
 builder.Services.AddScoped<INotificationService, NotificationService>();
@@ -47,8 +48,10 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-builder.Services.AddAutoMapper(typeof(CommsAuditMappingProfile));
-
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+});
 // 6. JWT AUTHENTICATION
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "superSecretKeyShiftMaster123!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

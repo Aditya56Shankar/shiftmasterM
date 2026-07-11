@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.SchedulingService.DTOs;
-using ShiftMaster.SchedulingService.Models;
-using ShiftMaster.SchedulingService.Services;
 using ShiftMaster.SchedulingService.Clients;
-using ShiftMaster.SchedulingService.Exceptions;
+using ShiftMaster.SchedulingService.Application.Interfaces;
+using ShiftMaster.SchedulingService.Application.Exceptions;
+using ShiftMaster.SchedulingService.Application.DTOs;
+using ShiftMaster.SchedulingService.Domain.Models;
 
 namespace ShiftMaster.SchedulingService.Controllers
 {
@@ -21,21 +21,48 @@ namespace ShiftMaster.SchedulingService.Controllers
         private readonly IWeeklyRosterService service;
         private readonly IMapper mapper;
         private readonly IEmployeeClient _employeeClient;
+        private readonly IIdentityClient _identityClient;
 
-        public RostersController(IWeeklyRosterService service, IMapper mapper, IEmployeeClient employeeClient)
+        public RostersController(IWeeklyRosterService service, IMapper mapper, IEmployeeClient employeeClient, IIdentityClient identityClient)
         {
             this.service = service;
             this.mapper = mapper;
             this._employeeClient = employeeClient;
+            this._identityClient = identityClient;
         }
 
+        
         [HttpPost]
         [Authorize(Roles = "Shift Supervisor")]
         public async Task<IActionResult> CreateRoster([FromBody] CreateRosterDto dto)
         {
+            if (dto == null)
+                return BadRequest("Invalid roster data payload.");
+
             try
             {
-                var entity = mapper.Map<WeeklyRoster>(dto);
+                // 1. Enforce validations against Identity Microservice
+                if (!await _identityClient.LocationExistsAsync(dto.LocationID))
+                    return BadRequest(new { Message = $"Location with ID {dto.LocationID} does not exist." });
+
+                if (!await _identityClient.DepartmentExistsAsync(dto.DepartmentID))
+                    return BadRequest(new { Message = $"Department with ID {dto.DepartmentID} does not exist." });
+
+                // 2. Extract and validate user ID using literal "nameid" from token context
+                var userIdClaim = User.FindFirst("nameid")?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int createdById))
+                    return Unauthorized(new { Message = "Valid User ID not found in token context." });
+
+                if (!await _identityClient.UserExistsAsync(createdById))
+                    return BadRequest(new { Message = $"Roster creator with User ID {createdById} does not exist." });
+
+                // 3. Map the DTO and inject the Token UserID directly during instantiation
+                var entity = mapper.Map<WeeklyRoster>(dto, opts =>
+                {
+                    opts.Items["TokenUserId"] = createdById;
+                });
+
+                // 4. Persist via the service layer
                 var result = await service.AddAsync(entity);
                 return Ok(mapper.Map<RosterResponseDto>(result));
             }
@@ -45,7 +72,7 @@ namespace ShiftMaster.SchedulingService.Controllers
             }
             catch (ResourceNotFoundException ex)
             {
-                return StatusCode(404, new { Message = "resource not found", Error = ex.Message });
+                return StatusCode(404, new { Message = "Resource not found", Error = ex.Message });
             }
         }
 
@@ -99,10 +126,11 @@ namespace ShiftMaster.SchedulingService.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                // FIXED: Updated claim target lookup to use "nameid" key matching your token configuration
+                var userIdClaim = User.FindFirst("nameid")?.Value;
 
                 if (string.IsNullOrEmpty(userIdClaim))
-                    return Unauthorized("User ID not found");
+                    return Unauthorized(new { Message = "User ID not found in token context." });
 
                 int userId = int.Parse(userIdClaim);
 

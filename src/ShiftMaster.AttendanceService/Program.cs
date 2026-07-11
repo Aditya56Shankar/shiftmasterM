@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using NSwag.Generation.Processors.Security;
-using ShiftMaster.AttendanceService.Data;
-using ShiftMaster.AttendanceService.Repositories;
-using ShiftMaster.AttendanceService.Services;
 using ShiftMaster.AttendanceService.Clients;
-using ShiftMaster.AttendanceService.Mappers;
+using ShiftMaster.AttendanceService.Applications.Services;
+using ShiftMaster.AttendanceService.Applications.Interfaces;
+using ShiftMaster.AttendanceService.Infrastructure.Data;
+using ShiftMaster.AttendanceService.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,26 +25,39 @@ builder.Services.AddDbContext<AttendanceDbContext>(options =>
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<IOvertimeRepository, OvertimeRepository>();
 
-// 3. HTTP CLIENTS
+// =========================================================================
+// 3. HTTP CLIENTS & SPECIAL CLIENTS (WITH TOKEN FORWARDING HANDLERS)
+// =========================================================================
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<TokenForwardingHandler>(); // Intercepts and forwards the JWT securely
+
 builder.Services.AddHttpClient<IIdentityClient, IdentityClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:IdentityService"] ?? "http://localhost:5001/");
-});
+    // Identity Service running on port 64101
+    client.BaseAddress = new Uri(builder.Configuration["Services:IdentityService"] ?? "https://localhost:64101/");
+})
+.AddHttpMessageHandler<TokenForwardingHandler>();
 
 builder.Services.AddHttpClient<ISchedulingClient, SchedulingClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:SchedulingService"] ?? "http://localhost:5003/");
-});
+    // Scheduling Service running on port 64105
+    client.BaseAddress = new Uri(builder.Configuration["Services:SchedulingService"] ?? "https://localhost:64105/");
+})
+.AddHttpMessageHandler<TokenForwardingHandler>();
 
 builder.Services.AddHttpClient<IEmployeeClient, EmployeeClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:EmployeeService"] ?? "http://localhost:5002/");
-});
+    // Employee Service running on port 64106
+    client.BaseAddress = new Uri(builder.Configuration["Services:EmployeeService"] ?? "https://localhost:64106/");
+})
+.AddHttpMessageHandler<TokenForwardingHandler>();
 
 builder.Services.AddHttpClient<IAuditService, HttpAuditService>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:CommsAuditService"] ?? "http://localhost:5005/");
-});
+    // Comms Audit Service running on port 64099
+    client.BaseAddress = new Uri(builder.Configuration["Services:CommsAuditService"] ?? "https://localhost:64099/");
+})
+.AddHttpMessageHandler<TokenForwardingHandler>();
 
 // 4. SERVICES
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
@@ -59,8 +72,10 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-builder.Services.AddAutoMapper(typeof(AttendanceMappingProfile));
-
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+});
 // 6. JWT AUTHENTICATION
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "superSecretKeyShiftMaster123!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

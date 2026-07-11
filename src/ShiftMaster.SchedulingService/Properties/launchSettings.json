@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "ShiftMaster.SchedulingService": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:64105;http://localhost:64107"
+    }
+  }
+}

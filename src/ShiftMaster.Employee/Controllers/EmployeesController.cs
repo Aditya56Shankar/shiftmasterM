@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.Employee.Services;
+using ShiftMaster.Employee.Application.Interfaces;
 
 namespace ShiftMaster.Employee.Controllers
 {

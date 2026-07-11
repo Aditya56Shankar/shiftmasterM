@@ -4,10 +4,10 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.Employee.DTOs;
-using ShiftMaster.Employee.Models;
-using ShiftMaster.Employee.Enums;
-using ShiftMaster.Employee.Services;
+using ShiftMaster.Employee.Application.DTOs;
+using ShiftMaster.Employee.Application.Interfaces;
+using ShiftMaster.Employee.Domain.Enums;
+using ShiftMaster.Employee.Domain.Models;
 
 namespace ShiftMaster.Employee.Controllers
 {
@@ -28,9 +28,25 @@ namespace ShiftMaster.Employee.Controllers
         [Authorize(Roles = "FrontLine Employee")]
         public async Task<IActionResult> Availability([FromBody] AvailabilityRequestDto avail)
         {
+            if (avail == null)
+                return BadRequest("Invalid availability data request.");
+
+            // 1. Extract the actual User ID securely tied to the JWT token
+            if (!TryGetCurrentUserId(out var actorUserId))
+            {
+                return Unauthorized("Invalid or missing user identity in token.");
+            }
+
             try
             {
-                var entity = mapper.Map<AvailabilitySubmission>(avail);
+                // 2. Pass the extracted actorUserId directly to the AutoMapper context items.
+                // This maps the DTO properties and sets entity.UserID via the mapping profile.
+                var entity = mapper.Map<AvailabilitySubmission>(avail, opts =>
+                {
+                    opts.Items["TokenUserId"] = actorUserId;
+                });
+
+                // 3. Process through the service layer (which cross-checks against IdentityDB)
                 var result = await service.AddAvailableAsync(entity);
                 return Ok(mapper.Map<AvailabilityResponseDto>(result));
             }
@@ -74,12 +90,9 @@ namespace ShiftMaster.Employee.Controllers
         {
             try
             {
-                var userIdClaim = User.FindFirst("nameid")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-                if (string.IsNullOrEmpty(userIdClaim))
+                if (!TryGetCurrentUserId(out var userId))
                     return Unauthorized();
 
-                int userId = int.Parse(userIdClaim);
                 var result = await service.GetMyScheduleAsync(userId);
                 return Ok(result);
             }
@@ -110,6 +123,17 @@ namespace ShiftMaster.Employee.Controllers
         {
             var isConfirmed = await service.IsConfirmedAsync(userId, date);
             return Ok(isConfirmed);
+        }
+
+        // ==========================================
+        // PRIVATE UTILITY METHODS
+        // ==========================================
+
+        // Extracted reusable token evaluation logic
+        private bool TryGetCurrentUserId(out int actorUserId)
+        {
+            var userIdClaim = User.FindFirst("nameid")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return int.TryParse(userIdClaim, out actorUserId);
         }
     }
 }

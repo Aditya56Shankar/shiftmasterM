@@ -2,10 +2,10 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.IdentityService.DTOs;
-using ShiftMaster.IdentityService.Services;
-using ShiftMaster.IdentityService.Data;
 using Microsoft.EntityFrameworkCore;
+using ShiftMaster.IdentityService.Application.DTOs;
+using ShiftMaster.IdentityService.Application.Interfaces;
+using ShiftMaster.IdentityService.Infrastructure.Data;
 
 namespace ShiftMaster.IdentityService.Controllers
 {

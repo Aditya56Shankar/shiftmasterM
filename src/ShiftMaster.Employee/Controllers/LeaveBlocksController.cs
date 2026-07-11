@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.Employee.DTOs;
-using ShiftMaster.Employee.Models;
-using ShiftMaster.Employee.Enums;
-using ShiftMaster.Employee.Services;
-using ShiftMaster.Employee.Repositories;
-using ShiftMaster.Employee.Exceptions;
+using ShiftMaster.Employee.Application.DTOs;
+using ShiftMaster.Employee.Application.Exceptions;
+using ShiftMaster.Employee.Application.Interfaces;
+using ShiftMaster.Employee.Domain.Enums;
+using ShiftMaster.Employee.Domain.Models;
+using ShiftMaster.Employee.Infrastructure.Repositories;
 
 namespace ShiftMaster.Employee.Controllers
 {

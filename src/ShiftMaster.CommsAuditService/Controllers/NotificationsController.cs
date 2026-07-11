@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.CommsAuditService.DTOs;
-using ShiftMaster.CommsAuditService.Services;
+using ShiftMaster.CommsAuditService.Application.DTOs;
+using ShiftMaster.CommsAuditService.Application.Interfaces;
 
 namespace ShiftMaster.CommsAuditService.Controllers
 {

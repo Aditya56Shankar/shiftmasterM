@@ -4,10 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.IdentityService.DTOs;
-using ShiftMaster.IdentityService.Services;
-using ShiftMaster.IdentityService.Data;
 using Microsoft.EntityFrameworkCore;
+using ShiftMaster.IdentityService.Application.DTOs;
+using ShiftMaster.IdentityService.Application.Interfaces;
+using ShiftMaster.IdentityService.Domain.Enums;
+using ShiftMaster.IdentityService.Infrastructure.Data;
 
 namespace ShiftMaster.IdentityService.Controllers
 {
@@ -135,7 +136,7 @@ namespace ShiftMaster.IdentityService.Controllers
         {
             var users = await _context.Users
                 .Include(u => u.Role)
-                .Where(u => u.LocationID == locationId && u.DepartmentID == departmentId && u.Status == Enums.UserStatus.Active && u.Role.roleName == "FrontLine Employee")
+                .Where(u => u.LocationID == locationId && u.DepartmentID == departmentId && u.Status == UserStatus.Active && u.Role.roleName == "FrontLine Employee")
                 .Select(u => new { u.UserID, u.EmployeeID, u.Name })
                 .ToListAsync();
             return Ok(users);
@@ -146,7 +147,7 @@ namespace ShiftMaster.IdentityService.Controllers
         {
             var users = await _context.Users
                 .Include(u => u.Role)
-                .Where(u => u.LocationID == locationId && u.Status == Enums.UserStatus.Active && u.Role.roleName == "FrontLine Employee")
+                .Where(u => u.LocationID == locationId && u.Status == UserStatus.Active && u.Role.roleName == "FrontLine Employee")
                 .Select(u => new { u.UserID, u.EmployeeID, u.Name })
                 .ToListAsync();
             return Ok(users);

@@ -3,9 +3,9 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ShiftMaster.SchedulingService.DTOs;
-using ShiftMaster.SchedulingService.Exceptions;
-using ShiftMaster.SchedulingService.Services;
+using ShiftMaster.SchedulingService.Application.DTOs;
+using ShiftMaster.SchedulingService.Application.Exceptions;
+using ShiftMaster.SchedulingService.Application.Interfaces;
 
 namespace ShiftMaster.SchedulingService.Controllers
 {

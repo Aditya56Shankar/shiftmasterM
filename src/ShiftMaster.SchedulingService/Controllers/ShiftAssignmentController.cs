@@ -6,12 +6,11 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using ShiftMaster.SchedulingService.DTOs;
-using ShiftMaster.SchedulingService.Models;
-using ShiftMaster.SchedulingService.Enums;
-using ShiftMaster.SchedulingService.Services;
-using ShiftMaster.SchedulingService.Repositories;
-using ShiftMaster.SchedulingService.Exceptions;
+using ShiftMaster.SchedulingService.Application.Interfaces;
+using ShiftMaster.SchedulingService.Application.Exceptions;
+using ShiftMaster.SchedulingService.Application.DTOs;
+using ShiftMaster.SchedulingService.Domain.Models;
+using ShiftMaster.SchedulingService.Infrastructure.Repositories;
 
 namespace ShiftMaster.SchedulingService.Controllers
 {

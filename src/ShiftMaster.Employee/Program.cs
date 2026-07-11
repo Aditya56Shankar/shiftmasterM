@@ -8,20 +8,24 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using NSwag.Generation.Processors.Security;
-using ShiftMaster.Employee.Data;
-using ShiftMaster.Employee.Repositories;
-using ShiftMaster.Employee.Services;
 using ShiftMaster.Employee.Clients;
-using ShiftMaster.Employee.Mappers;
+using ShiftMaster.Employee.Application.Services;
+using ShiftMaster.Employee.Application.Interfaces;
+using ShiftMaster.Employee.Infrastructure.Data;
+using ShiftMaster.Employee.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// =========================================================================
 // 1. DATABASE CONNECTION CONFIGURATION
+// =========================================================================
 builder.Services.AddDbContext<EmployeeDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
+// =========================================================================
 // 2. REPOSITORIES
+// =========================================================================
 builder.Services.AddScoped<ILeaveBlockRepository, LeaveBlockRepository>();
 builder.Services.AddScoped<IEmployeeSkillRepository, EmployeeSkillRepository>();
 builder.Services.AddScoped<ISkillRequirementRepository, SkillRequirementRepository>();
@@ -29,30 +33,43 @@ builder.Services.AddScoped<IAvailabilityRepository, AvailabilityRepository>();
 builder.Services.AddScoped<ISkillRepository, SkillRepository>();
 builder.Services.AddScoped<ILeaveRepository, LeaveRepository>();
 
-// 3. HTTP CLIENTS & SPECIAL CLIENTS
+// =========================================================================
+// 3. HTTP CLIENTS & SPECIAL CLIENTS (WITH HTTP CONTEXT TOKEN FORWARDING)
+// =========================================================================
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<TokenForwardingHandler>(); // Intercepts and copies outgoing JWTs
+
 builder.Services.AddHttpClient<IIdentityClient, IdentityClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:IdentityService"] ?? "http://localhost:5001/");
-});
+    // FIXED: Corrected fallback to match HTTPS ports configured in the solution topology
+    client.BaseAddress = new Uri(builder.Configuration["Services:IdentityService"] ?? "https://localhost:64101/");
+})
+.AddHttpMessageHandler<TokenForwardingHandler>();
 
 builder.Services.AddHttpClient<ISchedulingClient, SchedulingClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:SchedulingService"] ?? "http://localhost:5003/");
-});
+    client.BaseAddress = new Uri(builder.Configuration["Services:SchedulingService"] ?? "https://localhost:64105/");
+})
+.AddHttpMessageHandler<TokenForwardingHandler>();
 
 builder.Services.AddHttpClient<IAuditService, HttpAuditService>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Services:CommsAuditService"] ?? "http://localhost:5005/");
-});
+    client.BaseAddress = new Uri(builder.Configuration["Services:CommsAuditService"] ?? "https://localhost:64099/");
+})
+.AddHttpMessageHandler<TokenForwardingHandler>();
 
+// =========================================================================
 // 4. SERVICES
+// =========================================================================
 builder.Services.AddScoped<ILeaveBlockService, LeaveBlockService>();
 builder.Services.AddScoped<IEmployeeSkillService, EmployeeSkillService>();
 builder.Services.AddScoped<ISkillRequirementService, SkillRequirementService>();
 builder.Services.AddScoped<IAvailabilityService, AvailabilityService>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 
+// =========================================================================
 // 5. CONTROLLERS, JSON & AUTOMAPPER CONFIGURATION
+// =========================================================================
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -61,9 +78,14 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-builder.Services.AddAutoMapper(typeof(EmployeeMappingProfile));
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+});
 
+// =========================================================================
 // 6. JWT AUTHENTICATION
+// =========================================================================
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "superSecretKeyShiftMaster123!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -82,7 +104,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// =========================================================================
 // 7. OPENAPI / NSWAG DOCUMENTATION
+// =========================================================================
 builder.Services.AddOpenApiDocument(document =>
 {
     document.Title = "ShiftMaster Employee Service API";
@@ -108,10 +132,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 // Ensure DB is initialized

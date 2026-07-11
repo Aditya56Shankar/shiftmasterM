@@ -8,10 +8,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NSwag;
 using NSwag.Generation.Processors.Security;
-using ShiftMaster.IdentityService.Data;
-using ShiftMaster.IdentityService.Repositories;
-using ShiftMaster.IdentityService.Services;
-using ShiftMaster.IdentityService.Mappers;
+using ShiftMaster.IdentityService.Application.Services;
+using ShiftMaster.IdentityService.Application.Interfaces;
+using ShiftMaster.IdentityService.Infrastructure.Data;
+using ShiftMaster.IdentityService.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,7 +48,10 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-builder.Services.AddAutoMapper(typeof(IdentityMappingProfile));
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies());
+});
 
 // 5. JWT AUTHENTICATION
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "superSecretKeyShiftMaster123!";
