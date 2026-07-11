@@ -1,6 +1,7 @@
 <Solution>
-  <Project Path="API/shiftMaster.API.csproj" />
-  <Project Path="Data/shiftMaster.Data.csproj" />
-  <Project Path="Domain/shiftMaster.Domain.csproj" />
-  <Project Path="Services/shiftMaster.Services.csproj" />
+  <Project Path="src/ShiftMaster.IdentityService/ShiftMaster.IdentityService.csproj" />
+  <Project Path="src/ShiftMaster.Employee/ShiftMaster.Employee.csproj" />
+  <Project Path="src/ShiftMaster.SchedulingService/ShiftMaster.SchedulingService.csproj" />
+  <Project Path="src/ShiftMaster.AttendanceService/ShiftMaster.AttendanceService.csproj" />
+  <Project Path="src/ShiftMaster.CommsAuditService/ShiftMaster.CommsAuditService.csproj" />
 </Solution>
