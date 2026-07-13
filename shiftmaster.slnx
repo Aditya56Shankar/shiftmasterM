@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="ShiftMaster.ApiGateway/ShiftMaster.ApiGateway.csproj" Id="4171d087-be44-40d6-9b68-35a3519aede8" />
+  <Project Path="src/ShiftMaster.ApiGateway/ShiftMaster.ApiGateway.csproj" Id="4171d087-be44-40d6-9b68-35a3519aede8" />
   <Project Path="src/ShiftMaster.AttendanceService/ShiftMaster.AttendanceService.csproj" />
   <Project Path="src/ShiftMaster.CommsAuditService/ShiftMaster.CommsAuditService.csproj" />
   <Project Path="src/ShiftMaster.Employee/ShiftMaster.Employee.csproj" />
