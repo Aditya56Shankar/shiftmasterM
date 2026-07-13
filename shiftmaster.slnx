@@ -1,8 +1,36 @@
 <Solution>
-  <Project Path="src/ShiftMaster.ApiGateway/ShiftMaster.ApiGateway.csproj" Id="4171d087-be44-40d6-9b68-35a3519aede8" />
-  <Project Path="src/ShiftMaster.AttendanceService/ShiftMaster.AttendanceService.csproj" />
-  <Project Path="src/ShiftMaster.CommsAuditService/ShiftMaster.CommsAuditService.csproj" />
-  <Project Path="src/ShiftMaster.Employee/ShiftMaster.Employee.csproj" />
-  <Project Path="src/ShiftMaster.IdentityService/ShiftMaster.IdentityService.csproj" />
-  <Project Path="src/ShiftMaster.SchedulingService/ShiftMaster.SchedulingService.csproj" />
+  <Folder Name="/Gateway/">
+    <Project Path="src/ShiftMaster.ApiGateway/ShiftMaster.ApiGateway.csproj" Id="4171d087-be44-40d6-9b68-35a3519aede8" />
+  </Folder>
+  <Folder Name="/Services/" />
+  <Folder Name="/Services/Attendance/">
+    <Project Path="Attendance.API/Attendance.API.csproj" Id="86825af1-501f-4743-8ccc-559296a50757" />
+    <Project Path="Attendance.Application/Attendance.Application.csproj" Id="9db1dcde-ad4d-4e59-a41a-4c3f87a48914" />
+    <Project Path="Attendance.Domain/Attendance.Domain.csproj" Id="dc8d2085-5ef8-44dd-8d0f-0e3a7c709424" />
+    <Project Path="Attendance.Infrastructure/Attendance.Infrastructure.csproj" Id="b951d139-5bbc-4de7-8163-c3dcc21c352f" />
+  </Folder>
+  <Folder Name="/Services/Audit/">
+    <Project Path="Audit.API/Audit.API.csproj" Id="a957a6df-28f4-4e93-aa6c-4c30b0c0ab8b" />
+    <Project Path="audit.application/audit.application.csproj" Id="160dfbda-2b8e-460e-bd3f-ddbf408ea3cf" />
+    <Project Path="Audit.Domain/Audit.Domain.csproj" Id="31375bc1-4639-4bb3-8ae2-a81a7677774a" />
+    <Project Path="Audit.Infrastructure/Audit.Infrastructure.csproj" Id="709239ad-45b7-4197-bb10-fb814ac38b3b" />
+  </Folder>
+  <Folder Name="/Services/Employee/">
+    <Project Path="Employee.API/Employee.API.csproj" Id="52389d5d-21f8-4a4a-b880-0bc3e70b774f" />
+    <Project Path="Employee.Application/Employee.Application.csproj" Id="f269442b-b090-4b24-a361-5d88830162d3" />
+    <Project Path="Employee.Domain/Employee.Domain.csproj" Id="623770ba-8ecb-4f2d-b46c-33de7e15a1c9" />
+    <Project Path="Employee.Infrastructure/Employee.Infrastructure.csproj" Id="fd42330d-bb73-4b87-b28e-71f1224e1736" />
+  </Folder>
+  <Folder Name="/Services/Identity/">
+    <Project Path="Identity.API/Identity.API.csproj" Id="d6f4d275-0394-4e6d-a5f4-82fbdcbff3f3" />
+    <Project Path="Identity.Application/Identity.Application.csproj" Id="e7182aec-3444-4b22-82a0-1ea6c0c8fd4e" />
+    <Project Path="Identity.Domain/Identity.Domain.csproj" Id="1fdd2c4f-41cc-4076-8ba2-ebe470e8ed58" />
+    <Project Path="Identity.Infrastructure/Identity.Infrastructure.csproj" Id="5ee94605-343e-4de8-99df-c6f56de2c0ba" />
+  </Folder>
+  <Folder Name="/Services/Scheduling/">
+    <Project Path="Scheduling.API/Scheduling.API.csproj" Id="c1dd4511-4904-47af-935c-566ed4bb2d9e" />
+    <Project Path="Scheduling.Application/Scheduling.Application.csproj" Id="e061e102-2e64-45a5-a613-b5e86175d708" />
+    <Project Path="Scheduling.Domain/Scheduling.Domain.csproj" Id="19f76b5c-ce16-432f-8bd3-1d6974ddc32d" />
+    <Project Path="Scheduling.Infrastructure/Scheduling.Infrastructure.csproj" Id="475085fc-d6ac-404f-9b89-9866ef089efd" />
+  </Folder>
 </Solution>
